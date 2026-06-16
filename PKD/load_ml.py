@@ -16,19 +16,19 @@ class HashSource(Enum):
 class URLS(Enum):
     NL = ('https://www.npkd.nl/files/ml/NL_MASTERLIST.mls', 
           'https://www.npkd.nl/masterlist.html',
-          HashSource.WEBPAGE, "NL")
+          HashSource.WEBPAGE, "Netherlands")
     DE = ('https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/ElekAusweise/CSCA/GermanMasterList.zip?__blob=publicationFile',
           None,
-          HashSource.NONE, "DE")
+          HashSource.NONE, "Germany")
     IT = ('https://csca-ita.interno.gov.it/certificatiCSCA/IT_MasterListCSCA.zip', 
           None,
-          HashSource.NONE, "IT")
+          HashSource.NONE, "Italy")
 
 @dataclass
-class MLdata:
+class ParsedML:
     country : str
     raw: bytes
-    sha256_fingerprint: str
+    sha256_finger: str
     hash_check: bool | None
 
 #__________ Helper functions ______________________________________________________________________
@@ -73,7 +73,7 @@ def find_sha256(country: URLS) -> str:
 
 
 #__________ Load all MasterLists ______________________________________________________________________
-def load_mls() -> Iterator[MLdata]:
+def load_mls() -> Iterator[ParsedML]:
     for c in URLS:
         country = c.value[3]
         raw = fetch(c.value[0])
@@ -87,6 +87,6 @@ def load_mls() -> Iterator[MLdata]:
             hash_check = None
     
 
-        yield MLdata(country=country, raw=raw, sha256_fingerprint=raw_SHA, hash_check=hash_check)
+        yield ParsedML(country=country, raw=raw, sha256_finger=raw_SHA, hash_check=hash_check)
     
         
