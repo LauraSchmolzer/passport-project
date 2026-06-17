@@ -18,8 +18,8 @@ class URLS(Enum):
           'https://www.npkd.nl/masterlist.html',
           HashSource.WEBPAGE, "Netherlands")
     DE = ('https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/ElekAusweise/CSCA/GermanMasterList.zip?__blob=publicationFile',
-          None,
-          HashSource.NONE, "Germany")
+         None,
+         HashSource.NONE, "Germany")
     IT = ('https://csca-ita.interno.gov.it/certificatiCSCA/IT_MasterListCSCA.zip', 
           None,
           HashSource.NONE, "Italy")
@@ -38,14 +38,18 @@ def sha256(data: bytes) -> str:
 
 
 def fetch(url: str) -> bytes:
-    response = requests.get(
-        url,
-        headers={'User-Agent': 'Mozilla/5.0'},
-        timeout=30,
-        verify=certifi.where()
-    )
-    response.raise_for_status()
-    return response.content
+    try:
+        response = requests.get(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=30,
+            verify=certifi.where()
+        )
+        response.raise_for_status()
+        return response.content
+    except:
+        print(f"Could not fetch for {url}")
+        return None
 
 def unzip_if_needed(data: bytes) -> bytes:
     if not data.startswith(b"PK"):
@@ -87,6 +91,6 @@ def load_mls() -> Iterator[ParsedML]:
             hash_check = None
     
 
-        yield ParsedML(country=country, raw=raw, sha256_finger=raw_SHA, hash_check=hash_check)
+        yield ParsedML(country=country.upper(), raw=raw, sha256_finger=raw_SHA, hash_check=hash_check)
     
         
