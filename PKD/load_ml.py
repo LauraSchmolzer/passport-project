@@ -16,7 +16,7 @@ class HashSource(Enum):
 class URLS(Enum):
     NL = ('https://www.npkd.nl/files/ml/NL_MASTERLIST.mls', 
           'https://www.npkd.nl/masterlist.html',
-          HashSource.WEBPAGE, "Netherlands")
+            HashSource.WEBPAGE, "Netherlands")
     DE = ('https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/ElekAusweise/CSCA/GermanMasterList.zip?__blob=publicationFile',
          None,
          HashSource.NONE, "Germany")
@@ -47,8 +47,10 @@ def fetch(url: str) -> bytes:
         )
         response.raise_for_status()
         return response.content
-    except:
+    except Exception as e:
         print(f"Could not fetch for {url}")
+        print(e)
+        raise
         return None
 
 def unzip_if_needed(data: bytes) -> bytes:

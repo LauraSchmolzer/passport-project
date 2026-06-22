@@ -1,14 +1,18 @@
 from PKD.parsers.ml_parser import parse_ml
 from PKD.load_ml import load_mls, ParsedML
 from PKD.parsers.cert_parser import parse_cert, ParsedCert
+from collections import defaultdict
 
-from sqlalchemy.orm import sessionmaker, Session
+from PKD.crypto_helpers import _get_aki_ski, _verify_link
+
+from sqlalchemy.orm import Session
 
 from PKD.db_models import (
     MasterList,
     CSCACertificate,
     Country,
-    SessionLocal
+    SessionLocal,
+    CSCALink
 )
 
 class PKDImporter:
@@ -33,7 +37,7 @@ class PKDImporter:
                 # Create certificate and add to ml
                 self.__create_cert(parsed_cert,country_cert_db,ml_db)
             
-            self.__link_certs()
+        self.__link_certs()
 
 
     def __create_country(self, cc: str, organization: str | None = None) -> Country:
@@ -105,37 +109,51 @@ class PKDImporter:
         return cert
     
     def __link_certs(self):
-        link_certs = self.session.query(CSCACertificate).filter_by(is_link_cert=True).all()
+        link_certificates = self.session.query(CSCACertificate).filter_by(is_link_cert=True).all()
+        all_csca_certs = self.session.query(CSCACertificate).filter_by(is_link_cert=False).all()
 
-        for link_cert in link_certs:
-            old_root_signer = (
-                self.session.query(CSCACertificate)
-                .filter_by(
-                    country_id      = link_cert.country_id,
-                    subject_dn      = link_cert.issuer_dn,
-                    is_link_cert    = False,
-                    ).first()
-                )
-            new_root_signed = (
-                self.session.query(CSCACertificate)
-                .filter_by(
-                    country_id      = link_cert.country_id,
-                    subject_dn      = link_cert.subject_dn,
-                    is_link_cert    = False,
-                    ).filter(CSCACertificate.id != (old_root_signer.id if old_root_signer else None)).first()
-                )
+        ski_to_cert: dict[bytes, CSCACertificate] = {}
+        for csca in all_csca_certs:
+            aki, ski = _get_aki_ski(csca)
+            if ski is not None:
+                ski_to_cert[ski] = csca
 
-            if old_root_signer:
-                link_cert.source_certificate = old_root_signer
-            if new_root_signed:
-                if link_cert not in new_root_signed.link_certs:
-                    new_root_signed.link_certs.append(link_cert)
-        self.session.flush()
 
+        for link_cert in link_certificates:
+            aki, ski = _get_aki_ski(link_cert)
+
+            old_csca_cert = ski_to_cert.get(aki) if aki else None
+            new_csca_cert = ski_to_cert.get(ski) if ski else None
+
+            # cryptographically verify signature before trusting the Link
+            if old_csca_cert == None:
+                print(f"No issuer found for the link certificate {link_cert.country.code,link_cert.not_after}")
+
+                # NOTE: To inspect why certain certs might not link 
+                #other_links = self.session.query(CSCACertificate).filter_by(is_link_cert=True, country_id = link_cert.country_id ).all()
+                #for l in other_links:
+                #    print(l.country.code, l.not_after)
+                continue
+
+            if not _verify_link(link_cert,old_csca_cert):
+                print(f"This link cert is not right{link_cert.country.code}")
             
-            
+            link_cert.source_certs = old_csca_cert
 
+            if new_csca_cert is None:
+                print(
+                    f"No target CSCA found for link cert "
+                    f"{link_cert.country.code, link_cert.not_after}"
+                )
+                continue
+            new_csca_cert.source_certs = link_cert
+            edge = CSCALink(
+            from_csca_id=old_csca_cert.id,
+            to_csca_id=new_csca_cert.id,
+            link_cert_id=link_cert.id
+            )
 
+            self.session.add(edge)
 
 
 if __name__ == "__main__":

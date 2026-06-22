@@ -62,23 +62,29 @@ class CSCACertificate(Base):
 
     id              = Column(Integer, primary_key=True)
     country_id      = Column(Integer, ForeignKey("country.id"), index=True)
-    subject_dn      = Column(Text, nullable=False)
-    issuer_dn       = Column(Text, nullable=False)
+    subject_dn      = Column(Text, nullable=False) # Signed
+    issuer_dn       = Column(Text, nullable=False) # Signer
     serial_number   = Column(String(128), index=True)
     not_before      = Column(DateTime)
     not_after       = Column(DateTime)
     sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
     raw_cert        = Column(LargeBinary, nullable=False)
-
+    
     is_link_cert    = Column(Boolean, default=False)
-    # NULL for main roots
-    source_cert_id  = Column(Integer, ForeignKey("csca_cert.id"), nullable=True)
 
-    source_certs    = relationship("CSCACertificate", remote_side=[id],  back_populates="link_certs")
-    link_certs      = relationship("CSCACertificate", back_populates="source_certs")
     master_lists    = relationship("MasterList", secondary=csca_in_ml, back_populates="csca_certs")
     country         = relationship("Country", back_populates="csca_certs")
     ds_certs        = relationship("DSCertificate", back_populates="issuing_csca")
+
+class CSCALink(Base):
+    __tablename__ = "csca_link"
+
+    id = Column(Integer, primary_key=True)
+
+    from_csca_id = Column(Integer, ForeignKey("csca_cert.id"), index=True)
+    to_csca_id = Column(Integer, ForeignKey("csca_cert.id"), index=True)
+
+    link_cert_id = Column(Integer, ForeignKey("csca_cert.id"), unique=True)
 
 class CRL(Base):
     __tablename__   = "crl"
