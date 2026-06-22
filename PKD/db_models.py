@@ -39,8 +39,7 @@ class Country(Base):
 
     master_lists = relationship("MasterList", back_populates="country")
     csca_certs = relationship("CSCACertificate", back_populates="country")
-    ds_certs = relationship("DSCertificate", back_populates="country")
-    crls = relationship("CRL", back_populates="country")
+
 
 class MasterList(Base):
     __tablename__   = "master_list"
@@ -74,7 +73,6 @@ class CSCACertificate(Base):
 
     master_lists    = relationship("MasterList", secondary=csca_in_ml, back_populates="csca_certs")
     country         = relationship("Country", back_populates="csca_certs")
-    ds_certs        = relationship("DSCertificate", back_populates="issuing_csca")
 
 class CSCALink(Base):
     __tablename__ = "csca_link"
@@ -86,41 +84,6 @@ class CSCALink(Base):
 
     link_cert_id = Column(Integer, ForeignKey("csca_cert.id"), unique=True)
 
-class CRL(Base):
-    __tablename__   = "crl"
-
-    id              = Column(Integer, primary_key=True)
-    country_id      = Column(Integer, ForeignKey("country.id"), index=True)
-    issuer_dn       = Column(Text, nullable=False)
-    this_update     = Column(DateTime)
-    next_update     = Column(DateTime)
-    raw_crl         = Column(LargeBinary, nullable=False)
-
-    country         = relationship("Country", back_populates="crls")
-    ds_certs        = relationship("DSCertificate", back_populates="revoking_crl")
-    
-
-class DSCertificate(Base):
-    __tablename__   = "ds_cert"
-
-    id              = Column(Integer, primary_key=True)
-    country_id      = Column(Integer, ForeignKey("country.id"), index=True)
-    csca_id         = Column(Integer, ForeignKey("csca_cert.id"))
-    revoking_crl_id = Column(Integer, ForeignKey("crl.id"))
-    subject_dn      = Column(Text, nullable=False)
-    serial_number   = Column(String(128), unique=True, index=True)
-    not_before      = Column(DateTime)
-    not_after       = Column(DateTime)
-    sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
-    is_revoked      = Column(Boolean, default=False)
-    revoked_at      = Column(DateTime)
-    raw_cert        = Column(LargeBinary, nullable=False)
-
-    country         = relationship("Country", back_populates="ds_certs") # ds_cert.country.code
-    revoking_crl    = relationship("CRL", back_populates="ds_certs") # ds_cert.revoking_crl.this_update
-    issuing_csca    = relationship("CSCACertificate", back_populates="ds_certs"
-)
-    
 
 DATABASE_URL = (os.getenv('DB_URL'))
 

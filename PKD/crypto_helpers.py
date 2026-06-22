@@ -82,6 +82,7 @@ def _verify_link(link_cert: CSCACertificate, old_csca_cert: CSCACertificate) -> 
     # Verify link certs signature against its claimed issuer's puplic key
 
     issuer_pubkey = _get_publickey(old_csca_cert)
+    
     raw = link_cert.raw_cert
     cert = x509.load_der_x509_certificate(raw)
     asn1_cert = asn1_x509.Certificate.load(raw)

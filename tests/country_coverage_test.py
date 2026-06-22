@@ -15,7 +15,17 @@ eMRTD_participants = {
     'US', 'UY', 'UZ', 'VA', 'VC', 'VN', 'XO', 'YE', 'ZW', 'ZZ'
 }
 
-from PKD.db_models import CSCACertificate, SessionLocal
+from PKD.db_models import CSCACertificate, SessionLocal, MasterList
+
+def test_which_countries():
+    with SessionLocal() as session:
+        all_mls = session.query(MasterList).all()
+        for ml in all_mls:
+            countries = set()
+            for cert in ml.csca_certs:
+                countries.add(cert.country.code)
+
+            print(f"Master list : {ml.country.code} contains {sorted(countries)}" )
 
 def test_cert_hash_integrity():
     countries = set()
@@ -28,3 +38,5 @@ def test_cert_hash_integrity():
     print(f"Missing countries {sorted(missing), len(missing)} from total {len(eMRTD_participants)}")
 
 test_cert_hash_integrity()
+print("\n")
+test_which_countries()

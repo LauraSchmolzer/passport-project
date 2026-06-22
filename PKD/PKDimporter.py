@@ -148,9 +148,9 @@ class PKDImporter:
                 continue
             new_csca_cert.source_certs = link_cert
             edge = CSCALink(
-            from_csca_id=old_csca_cert.id,
-            to_csca_id=new_csca_cert.id,
-            link_cert_id=link_cert.id
+                from_csca_id=old_csca_cert.id,
+                to_csca_id=new_csca_cert.id,
+                link_cert_id=link_cert.id
             )
 
             self.session.add(edge)
