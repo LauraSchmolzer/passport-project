@@ -19,8 +19,9 @@ pip install -r requirements.txt
 
 Set the database connection string in `.env`:
 
+I personally used sqlite for simplicity.
 ```
-DB_URL=postgresql://<user>:<password>@<host>/<dbname>
+DB_URL=sqlite:///data/passport_pki.db
 ```
 
 ## Country scope
