@@ -108,13 +108,12 @@ encountered so far:
   link certs, but some national CSCAs omit it.
 - **Unresolved issuers** — a number of link certs (LV, CY, AE, LB, AT, HU,
   BG, TR, EE, PH, MD, CN, MA as of writing) have no matching predecessor CSCA
-  in the imported dataset. Likely cause: ICAO PKD master lists may not
-  republish CSCA certs once fully superseded, even though the link cert
-  referencing them remains published. Most of the time, a second link cert exists from the same date.
+  in the imported dataset. Most of the time, a second link cert exists from the same date.
 - **Malformed extensions** — at least two Lithuanian certs raise a parse
   error on a specific extension; root cause not yet isolated.
 - **Non-conformant ASN.1 encodings** — NULL signature algorithm parameters
   (common in Java-generated certs) and non-positive serial numbers. Currently
   only warnings in `cryptography==46.0.0`; a future release will treat these
   as hard parse failures, which is why the version is pinned rather than
-  left floating. The program will fail for the most recent versions of cryptography. 
+  left floating. The program will fail for the most recent versions of cryptography 
+  and the warning in version 46.0.0 is surpressed.
