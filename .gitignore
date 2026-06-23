@@ -2,4 +2,4 @@
 __pycache__/
 *.ldif
 venv/
-.db
+*.db
