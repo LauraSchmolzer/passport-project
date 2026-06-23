@@ -66,11 +66,12 @@ A link certificate's `AuthorityKeyIdentifier` (AKI) and `SubjectKeyIdentifier`
 (SKI) extensions are used to locate its claimed predecessor (old CSCA) and
 successor (new CSCA) within the existing CSCA set. 
 
-- The CSCA Certificate is self-signed meaning SKI == AKI.
-- The Link Certificate is signed by the old CSCA and the new CSCA is the subject.
+According to `Doc 9303 Part 12` Table 6 on page 41, SKI and AKI are mandatory extensions.
 
-When identified, they still have to be cryptographically validated. 
-As older certificates exist and countries vary from format, there exist different formats. 
+- The CSCA Certificate is self-signed meaning SKI == AKI.
+- The Link Certificate is signed by the old CSCA and the new CSCA is the subject. This means AKI = old CSCA , SKI = new CSCA.
+
+The full process of linking certificates:
 
 1. Build a `SKI -> CSCACertificate` lookup map from **all** stored CSCA certs.
 2. For each link cert, resolve `AKI -> old CSCA` and `SKI -> new CSCA` via
@@ -80,11 +81,18 @@ As older certificates exist and countries vary from format, there exist differen
    the candidate's public key in (`_verify_link`) before the link is trusted,
    since matching identifiers can't be forged-checked without doing the math.
 
+As older certificates exist and countries vary from format, there exist different formats. 
 Signature verification handles RSA (PKCS#1 v1.5 and RSASSA-PSS) and ECDSA,
 with the hash algorithm and PSS parameters read via `asn1crypto` rather than
 `cryptography`'s `signature_hash_algorithm`, which does not resolve PSS.
 
 ![verification](data/verification.png "Verification")
+Data flow of validation.
+
+![validation](data/validation.png "validation")
+Validation abstracted.
+
+
 
 ## Known issues and data quirks
 
