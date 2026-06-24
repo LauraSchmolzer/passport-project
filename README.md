@@ -91,7 +91,7 @@ with the hash algorithm and PSS parameters read via `asn1crypto` rather than
 Data flow of validation.
 
 ![validation](data/validation.png "validation")
-Validation abstracted.
+Validation for RSA abstracted.
 
 
 
