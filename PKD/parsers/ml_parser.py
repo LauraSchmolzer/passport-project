@@ -1,5 +1,5 @@
 from asn1crypto import cms, core, x509 as asn1_x509
-from PKD.load_ml import ParsedML
+from PKD.load_mls.load_ml import ParsedML
 
 class CscaMasterList(core.Sequence):
     _fields = [
