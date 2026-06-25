@@ -13,6 +13,9 @@ from cryptography.utils import CryptographyDeprecationWarning
 
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 
+import logging
+logger = logging.getLogger(__name__)
+
 _HASH_ALGOS = {
     "sha1":     hashes.SHA1(),
     "sha224":   hashes.SHA224(),
@@ -22,13 +25,12 @@ _HASH_ALGOS = {
 }
 
 
-def _get_aki_ski(c: CSCACertificate) -> tuple[bytes | None, bytes | None]:
+def _get_aki_ski(cert: asn1_x509.Certificate) -> tuple[bytes | None, bytes | None]:
     """
         Document 12: Table 6 on page 41 : Certificate Extensions Profile
             - SKI and AKI have mandatory presence for CSCA self-signed root.
             - SKI and AKI have mandatory presence for CSCA Link.
     """
-    cert = asn1_x509.Certificate.load(c.raw_cert)
     extensions = cert['tbs_certificate']['extensions']
 
     aki = None
@@ -41,7 +43,7 @@ def _get_aki_ski(c: CSCACertificate) -> tuple[bytes | None, bytes | None]:
                 aki_field = ext['extn_value'].parsed['key_identifier']
                 aki = aki_field.native if aki_field else None
         except ValueError:
-            print("Malformed extension")
+            logger.warning("Malformed extension encountered")
             continue  # malformed extension bytes; skip just this one
 
     return aki, ski
@@ -53,16 +55,21 @@ def _get_publickey(c: CSCACertificate):
     try:
         cert = x509.load_der_x509_certificate(raw)
     except Exception as e:
-        print(e)
-        print(f"Failed to load certificate. Try uisng a different cryptography version.")
-        return None
+        logger.error("Failed to load DER certificate",
+            extra={
+                "error": str(e),
+                "cert_size": len(raw),})
+        raise ValueError("Failed to extract public key")
 
     try: 
         return cert.public_key() # first try with cryptography library 
     except Exception as e: # else reformat
         if "explicit" not in str(e).lower():
+            logger.exception("Unexpected cryptography failure while extracting public key")
             raise  # unrelated errors, error must be about explicit curve params
-
+        
+        logger.warning("Using OpenSSL fallback for explicit EC parameters",
+                       extra={"reason":"explicit_curve_parameters"})
         # re-encode to PEM bytes
         pem_cert = cert.public_bytes(Encoding.PEM) 
         # pull the public key out the the re-encoded certificate
@@ -93,6 +100,16 @@ def _verify_link(link_cert: CSCACertificate, old_csca_cert: CSCACertificate) -> 
     hash_name = asn1_cert.hash_algo        
     sig_algo  = asn1_cert.signature_algo   
     hash_alg = _HASH_ALGOS.get(hash_name)
+
+    logger.debug(
+        "Verifying link certificate",
+        extra={
+            "link_cert_id": link_cert.id,
+            "issuer_id": old_csca_cert.id,
+            "hash_algo": hash_name,
+            "sig_algo": sig_algo,
+        }
+    )
     if hash_alg is None:
         raise ValueError(f"Unsupported hash algorithm: {hash_name}")
 
@@ -100,6 +117,8 @@ def _verify_link(link_cert: CSCACertificate, old_csca_cert: CSCACertificate) -> 
     try:
         if isinstance(issuer_pubkey, rsa.RSAPublicKey):
             if sig_algo == "rsassa_pss":
+                logger.debug("RSA-PSS signature detected")
+
                 params = asn1_cert["signature_algorithm"]["parameters"]
                 salt_length = params["salt_length"].native if params else 20  # RFC 8017 default
                 issuer_pubkey.verify(
@@ -108,13 +127,21 @@ def _verify_link(link_cert: CSCACertificate, old_csca_cert: CSCACertificate) -> 
                     hash_alg,
                 )
             else:
+                logger.debug("RSA-PKCS1v1.5 signature detected")
                 issuer_pubkey.verify(signature, tbs_bytes, padding.PKCS1v15(), hash_alg)
         elif isinstance(issuer_pubkey, ec.EllipticCurvePublicKey):
+            logger.debug("ECDSA signature detected")
             issuer_pubkey.verify(signature, tbs_bytes, ec.ECDSA(hash_alg))
         else:
-            raise TypeError(f"Unsupported key type: {type(issuer_pubkey)}")
+            logger.error(
+            "Unsupported key type",
+                extra={"type": str(type(issuer_pubkey))}
+            )
+            return False
+        logger.debug("Signature verification succesful")
         return True
     except InvalidSignature:
+        logger.debug("Signature verification unsuccesful")
         return False
 
 

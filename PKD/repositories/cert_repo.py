@@ -27,6 +27,8 @@ class CertificateRepository:
             not_after=cert_data.not_after,
             serial_number=cert_data.serial_number,
             sha256_finger=cert_data.sha256_finger,
+            aki = cert_data.aki,
+            ski = cert_data.ski,
             country=country,
             is_link_cert=cert_data.is_link_cert,
         )

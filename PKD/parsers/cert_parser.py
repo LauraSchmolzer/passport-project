@@ -1,23 +1,13 @@
 from PKD.load_mls.load_ml import sha256
+from PKD.verify.crypto_helpers import _get_aki_ski
 from dataclasses import dataclass
 from datetime import datetime
 from asn1crypto import x509 as asn1_x509
 
-def is_link_certificate(cert: asn1_x509.Certificate) -> bool:
-    extensions = cert['tbs_certificate']['extensions']
+import logging
+logger = logging.getLogger(__name__)
 
-    ski = None
-    aki = None
-    for ext in extensions:
-        try:
-            if ext['extn_id'].native == 'key_identifier':
-                ski = ext['extn_value'].parsed.native
-            elif ext['extn_id'].native == 'authority_key_identifier':
-                aki_field = ext['extn_value'].parsed['key_identifier']
-                aki = aki_field.native if aki_field else None
-        except ValueError:
-            # Malformed extension bytes on this cert; skip it and fall back below
-            continue
+def is_link_certificate(aki,ski,cert: asn1_x509.Certificate) -> bool:
 
     if ski is None or aki is None:
         return cert.subject.human_friendly != cert.issuer.human_friendly
@@ -46,6 +36,9 @@ class ParsedCert:
     not_before: datetime
     not_after: datetime
 
+    aki: bytes
+    ski: bytes
+
     is_link_cert: bool
 
 def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
@@ -53,6 +46,8 @@ def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
 
     subject = cert.subject.native
     issuer = cert.issuer.native
+
+    aki,ski = _get_aki_ski(cert)
 
     return ParsedCert(
         raw             = der,
@@ -72,5 +67,8 @@ def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
         not_before      = cert['tbs_certificate']['validity']['not_before'].native,
         not_after       = cert['tbs_certificate']['validity']['not_after'].native,
 
-        is_link_cert    = is_link_certificate(cert)
+        aki = aki,
+        ski = ski,
+        
+        is_link_cert    = is_link_certificate(aki,ski, cert)
         )

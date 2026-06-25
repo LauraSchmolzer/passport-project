@@ -1,6 +1,9 @@
-from PKD.crypto_helpers import _get_aki_ski, _verify_link
+from PKD.verify.crypto_helpers import _get_aki_ski, _verify_link
 from PKD.db_models import CSCACertificate, CSCALink
 from collections import defaultdict
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LinkGraphBuilder:
@@ -21,35 +24,40 @@ class LinkGraphBuilder:
         index = {}
 
         for cert in certs:
-            _, ski = _get_aki_ski(cert)
+            ski = cert.ski
             if ski:
                 index[ski] = cert
 
         return index
 
     def _process_link(self, link_cert, ski_index):
-        aki, ski = _get_aki_ski(link_cert)
+        aki = link_cert.aki
+        ski = link_cert.ski
 
         old_csca = ski_index.get(aki) if aki else None
         new_csca = ski_index.get(ski) if ski else None
 
         if old_csca is None:
-            print(
-                f"[LINK] No issuer found for {link_cert.country.code}, "
-                f"{link_cert.not_after}"
+            logger.debug(
+                "No issuer found", extra={
+                    "country": link_cert.country.code,
+                    "not_after": link_cert.not_after}
             )
             return
 
         if not _verify_link(link_cert, old_csca):
-            print(
-                f"[LINK] Invalid signature: {link_cert.country.code}"
+            logger.debug(
+                "Invalid signature", extra={
+                    "country": link_cert.country.code,
+                    "not_after": link_cert.not_after}
             )
             return
 
         if new_csca is None:
-            print(
-                f"[LINK] No target CSCA for {link_cert.country.code}, "
-                f"{link_cert.not_after}"
+            logger.debug(
+                "No target CSCA", extra={
+                    "country": link_cert.country.code,
+                    "not_after": link_cert.not_after}
             )
             return
 

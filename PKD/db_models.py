@@ -68,6 +68,9 @@ class CSCACertificate(Base):
     not_after       = Column(DateTime)
     sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
     raw_cert        = Column(LargeBinary, nullable=False)
+
+    ski             = Column(LargeBinary, nullable=True)
+    aki             = Column(LargeBinary, nullable=True)
     
     is_link_cert    = Column(Boolean, default=False)
 
