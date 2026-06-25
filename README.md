@@ -1,4 +1,4 @@
-# eMRTD CSCAs from public MLs
+# PKD from public MLs
 
 Imports and validates eMRTD PKI data — CSCA and Link certificates from public master lists — into a relational
 database for cross-referencing and trust-chain validation.
