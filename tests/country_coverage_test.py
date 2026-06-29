@@ -33,6 +33,7 @@ def test_cert_hash_integrity():
         all_certs = session.query(CSCACertificate).all()
         for cert in all_certs:
             countries.add(cert.country.code)
+
     
     missing = eMRTD_participants.difference(countries)
     print(f"Missing countries {sorted(missing), len(missing)} from total {len(eMRTD_participants)}")
