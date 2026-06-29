@@ -37,4 +37,5 @@ class CertificateRepository:
         self.session.flush()
 
         cert.master_lists.append(ml)
+
         return cert

@@ -40,4 +40,12 @@ SOURCES: list[MasterListSource] = [
         hash_url=None,
         hash_source=HashSource.NONE,
     ),
+    MasterListSource(
+        code="SE",
+        name="Sweden",
+        ml_url="http://cert.polisen.se/CSCA/SWE.ml",
+        hash_url=None,
+        hash_source=HashSource.NONE,
+    ),
+    
 ]
