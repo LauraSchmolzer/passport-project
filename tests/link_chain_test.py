@@ -6,7 +6,7 @@ It verifies link certificates and reconstructs relationships using CSCALink edge
 from PKD.db_models import CSCACertificate, CSCALink, SessionLocal
 from sqlalchemy import or_
 
-COUNTRY = "NO"
+COUNTRY = "CN"
 
 def test_cert_linkgraph():
     with SessionLocal() as session:
@@ -19,7 +19,7 @@ def test_cert_linkgraph():
             .order_by(CSCACertificate.not_before.asc())
             .all()
         )
-
+        
         print(f"\n================ CSCA LINK CHAIN FOR {COUNTRY} ================\n")
 
         # Preload all links for this country (edges)

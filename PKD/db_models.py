@@ -1,6 +1,6 @@
 " PostgreSQL database for PKI objects "
 
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, Text, DateTime, LargeBinary, Boolean, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, Text, DateTime, LargeBinary, Boolean, UniqueConstraint, JSON
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 import os
@@ -39,6 +39,8 @@ class Country(Base):
 
     master_lists = relationship("MasterList", back_populates="country")
     csca_certs = relationship("CSCACertificate", back_populates="country")
+    ds_certs = relationship("DSCertificate", back_populates="country")
+    crls = relationship("CRL", back_populates="country")
 
 
 class MasterList(Base):
@@ -76,6 +78,11 @@ class CSCACertificate(Base):
 
     master_lists    = relationship("MasterList", secondary=csca_in_ml, back_populates="csca_certs")
     country         = relationship("Country", back_populates="csca_certs")
+    ds_certs        = relationship(
+        "DSCertificate",
+        foreign_keys="DSCertificate.csca_id",
+        back_populates="issuing_csca",
+    )
 
 class CSCALink(Base):
     __tablename__ = "csca_link"
@@ -87,10 +94,66 @@ class CSCALink(Base):
 
     link_cert_id = Column(Integer, ForeignKey("csca_cert.id"), unique=True)
 
+class CRL(Base):
+    __tablename__ = "crl"
+
+    id              = Column(Integer, primary_key=True)
+    country_id      = Column(Integer, ForeignKey("country.id"), index=True)
+    csca_id         = Column(Integer, ForeignKey("csca_cert.id"), index=True, nullable=True)
+
+    issuer_dn       = Column(Text, nullable=False)
+    this_update     = Column(DateTime)
+    next_update     = Column(DateTime)
+
+    aki             = Column(LargeBinary, nullable=True)
+    signature_valid = Column(Boolean, nullable=True)  # None = not yet checked
+
+    raw_crl         = Column(LargeBinary, nullable=False)
+    sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
+
+    # {serial_number: revocation_date} stored as JSON
+    revoked_serials = Column(JSON, nullable=False, default=dict)
+
+    country  = relationship("Country", back_populates="crls")
+    ds_certs = relationship("DSCertificate", back_populates="revoking_crl")
+
+class DSCertificate(Base):
+    __tablename__ = "ds_cert"
+    
+    __table_args__ = (
+            UniqueConstraint("serial_number", "issuer_dn", name="uq_ds_serial_issuer"),
+        )
+
+    id              = Column(Integer, primary_key=True)
+    country_id      = Column(Integer, ForeignKey("country.id"), index=True)
+    csca_id         = Column(Integer, ForeignKey("csca_cert.id"))
+    revoking_crl_id = Column(Integer, ForeignKey("crl.id"))
+
+    subject_dn      = Column(Text, nullable=False)
+    issuer_dn       = Column(Text, nullable=False)
+
+    serial_number   = Column(String(128), index=True)  # unique=True removed
+    not_before      = Column(DateTime)
+    not_after       = Column(DateTime)
+    sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
+    raw_cert        = Column(LargeBinary, nullable=False)
+    signature_valid = Column(Boolean, nullable=True)
+
+    ski             = Column(LargeBinary, nullable=True)
+    aki             = Column(LargeBinary, nullable=True)
+
+    country      = relationship("Country", back_populates="ds_certs")
+    revoking_crl = relationship("CRL", back_populates="ds_certs")
+    issuing_csca = relationship(
+        "CSCACertificate",
+        foreign_keys="DSCertificate.csca_id",
+        back_populates="ds_certs",
+    )
+
 
 DATABASE_URL = (os.getenv('DB_URL'))
 
-engine = create_engine(DATABASE_URL )
+engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 SessionLocal = sessionmaker(bind=engine)
 

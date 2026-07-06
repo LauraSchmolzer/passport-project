@@ -1,4 +1,4 @@
-from PKD.load_mls.load_ml import sha256
+from PKD.parsers.ldif_parser import sha256
 from PKD.verify.crypto_helpers import _get_aki_ski
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,6 +14,20 @@ def is_link_certificate(aki,ski,cert: asn1_x509.Certificate) -> bool:
 
     return ski != aki
 
+def _get_crl_distribution_points(cert: asn1_x509.Certificate) -> list[str]:
+    ext = cert.crl_distribution_points
+    if ext is None:
+        return []
+
+    urls = []
+    for dp in ext.native:
+        names = dp.get('distribution_point')
+        if names:
+            for name in names:
+                if isinstance(name, str) and name.startswith('http'):
+                    urls.append(name)
+    return urls
+
 @dataclass
 class ParsedCert:
     raw: bytes
@@ -22,7 +36,7 @@ class ParsedCert:
     serial_number: str
 
     subject_dn: str
-    issuer_dn: str
+    issuer_dn: str | None
 
     subject_country: str | None
     issuer_country: str | None
@@ -39,7 +53,7 @@ class ParsedCert:
     aki: bytes
     ski: bytes
 
-    is_link_cert: bool
+    is_link_cert: bool | None
 
 def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
     der = cert.dump()
@@ -70,5 +84,5 @@ def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
         aki = aki,
         ski = ski,
         
-        is_link_cert    = is_link_certificate(aki,ski, cert)
+        is_link_cert    = is_link_certificate(aki,ski, cert) or None
         )
