@@ -57,10 +57,15 @@ def get_crl_distribution_urls(cert: asn1_x509.Certificate) -> Optional[str]:
     urls: List[str] = []
     for point in crl_extn:
         distr_point = point.get('distribution_point')
+        print(distr_point)
         if not distr_point:
             continue
         for name in distr_point:
             if is_valid_url(name):
+                logger.info("HTTPS/HTTP entry: %s", name)
+                urls.append(name)
+            elif isinstance(name, str) and name.startswith('ldap://'):
+                logger.info("LDAP entry: %s", name)
                 urls.append(name)
     return urls
 
