@@ -33,19 +33,21 @@ Master lists are currently downloaded and imported for:
 | Netherlands | NL |
 | Italy | IT |
 | Germany | DE |
+| Sweden | SE |
 
 ## Running the importer
 
 This downloads the MLs from public websites.
 Please first verify links before running the program to ensure safety.
-- The Dutch National Public Key Directory , www.npkd.nl
-- BSI Nundesamt für Sicherheit in der Informationstechnik, www.bsi.bund.de
-- Ministero dell'Interno, www.csca-ita.interno.gov.it
+- [The Dutch National Public Key Directory](https://www.npkd.nl)
+- [BSI Nundesamt für Sicherheit in der Informationstechnik](https://www.bsi.bund.de)
+- [Ministero dell'Interno](https://www.csca-ita.interno.gov.it)
+- [Polisen Sverige](http://cert.polisen.se)
 
 All links are found in: 
 
 ```bash
-PKD/load_ml.py
+PKD/load/mls.py
 ```
 
 ```bash
@@ -93,7 +95,31 @@ Data flow of validation.
 ![validation](data/validation.png "validation")
 Validation for RSA abstracted.
 
+## Trust Score of a Root Certificate
 
+According to official ICAO documentation, there exist three categories for ranking the trust of CSCA certificates. As the CSCA serves as the root anchor of the entire validation process, establishing its trust is critical for ePassport validation.
+
+The scoring logic can be found in:
+```bash
+PKD/graph/score_builder.py
+```
+
+The score stored in the database is an integer value from 0–3, corresponding to the official ICAO categories:
+
+| Score | Rating |
+|---|---|
+| 0     | Red    |
+| 1     | Amber  |
+| 2–3   | Green  |
+
+[Full explanations of these categories can be found on the ICAO website](https://www.icao.int/icao-pkd/epassport-validation-roadmap-tool-validating-csca).
+
+A CSCA root gains one trust point for each of the following, independently satisfied:
+- At least one Master List containing this CSCA was verified against its published thumbprint.
+- The CSCA certificate appears in more than one independent Master List.
+- The CSCA certificate has at least one verified link certificate chaining to it.
+
+This is not a complete implementation of ICAO's methodology: ICAO's own criteria also include direct bilateral exchange with a trusted contact at the issuing authority, which this implementation cannot replicate.
 
 ## Known issues and data quirks
 
@@ -117,3 +143,11 @@ encountered so far:
   as hard parse failures, which is why the version is pinned rather than
   left floating. The program will fail for the most recent versions of cryptography 
   and the warning in version 46.0.0 is surpressed.
+  - **Chicken-and-egg problem for Master List trust** — Verifying a Master List's signature requires 
+  already possessing the CSCA root certificate that signed it. However, the most convenient source of 
+  that CSCA root is the Master List itself, creating a circular trust dependency: an automated pipeline 
+  cannot bootstrap trust in the root it needs from the very document that root is meant to authenticate. 
+  Verifying a Master List's signature against a CSCA certificate bundled inside that same Master List 
+  would provide no real security, since a forged Master List could simply include a matching forged CSCA 
+  root, passing its own internal signature check.
+

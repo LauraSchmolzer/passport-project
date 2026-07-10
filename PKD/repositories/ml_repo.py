@@ -17,7 +17,8 @@ class MasterListRepository:
             sequence_number=1,
             raw_ml=ml_data.raw,
             sha256_finger=ml_data.sha256_finger,
-            country=country
+            country=country,
+            hash_validated = ml_data.hash_check
         )
 
         self.session.add(ml)

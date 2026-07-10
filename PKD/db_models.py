@@ -30,8 +30,7 @@ class Country(Base):
     __tablename__ = "country"
 
     id          = Column(Integer, primary_key=True)
-    code        = Column(String(3), nullable=False, index=True) # Conists of 3 int max
-    name        = Column(String(128))                            # Consists of 128 int max
+    code        = Column(String(3), nullable=False, index=True) # Conists of 3 int max                      # Consists of 128 int max
     organization = Column(String(256))  # disambiguates sub-issuers sharing a country code (e.g. CN vs Macau SAR)
 
     __table_args__ = (UniqueConstraint("code", "organization", name="uq_country_code_org"),)
@@ -52,6 +51,7 @@ class MasterList(Base):
     sequence_number = Column(Integer)
     raw_ml          = Column(LargeBinary)
     sha256_finger   = Column(String(64), unique=True, index=True, nullable=False)
+    hash_validated  = Column(Boolean, nullable=True)
 
     csca_certs      = relationship("CSCACertificate", secondary=csca_in_ml, back_populates="master_lists")
     country         = relationship("Country", back_populates="master_lists")
@@ -73,6 +73,8 @@ class CSCACertificate(Base):
     aki             = Column(LargeBinary, nullable=True)
     
     is_link_cert    = Column(Boolean, default=False)
+
+    score           = Column(Integer, nullable=True) 
 
     master_lists    = relationship("MasterList", secondary=csca_in_ml, back_populates="csca_certs")
     country         = relationship("Country", back_populates="csca_certs")

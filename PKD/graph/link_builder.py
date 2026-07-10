@@ -61,6 +61,12 @@ class LinkGraphBuilder:
             )
             return
 
+        existing = self.session.query(CSCALink).filter_by(
+            link_cert_id=link_cert.id
+        ).first()
+
+        if existing:
+            return
         # store relationship
         edge = CSCALink(
             from_csca_id=old_csca.id,

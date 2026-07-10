@@ -1,4 +1,4 @@
-from PKD.load_mls.load_ml import sha256
+from PKD.load.sha_helpers import sha256
 from PKD.verify.crypto_helpers import _get_aki_ski
 from dataclasses import dataclass
 from datetime import datetime

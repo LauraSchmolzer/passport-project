@@ -1,12 +1,15 @@
 from PKD.parsers.ml_parser import parse_ml
-from PKD.load_mls.load_ml import load_mls
+from PKD.load.load_ml import load_mls
 from PKD.parsers.cert_parser import parse_cert
 from collections import defaultdict
 
 from PKD.graph.link_builder import LinkGraphBuilder
+from PKD.graph.score_builder import ScoreCSCABuilder
+
 from PKD.repositories.cert_repo import CertificateRepository
 from PKD.repositories.ml_repo import MasterListRepository
 from PKD.repositories.country_repo import CountryRepository
+
 from PKD.db_models import MasterList,SessionLocal
 
 import logging
@@ -48,27 +51,18 @@ class PKDImporter:
         logger.info("Staring CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link Graph construstion complete")
+        
+        logger.info("Staring CSCA scoring")
+        ScoreCSCABuilder(self.session).score()
+        logger.info("CSCA scoring complete")
     
 
 
 if __name__ == "__main__":
-
     with SessionLocal() as session:
         importer = PKDImporter(session)
         importer.parse()
         session.commit()
-        from collections import defaultdict
-
-        matrix = defaultdict(set)
-
-        for ml in session.query(MasterList).all():
-            ml_country = ml.country.code
-
-            for cert in ml.csca_certs:
-
-                if cert.country.code == "DK":
-                    matrix[ml_country].add((cert.not_after, cert.sha256_finger))
-
         session.close()
 
                         
