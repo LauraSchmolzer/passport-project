@@ -1,5 +1,5 @@
 """
-    Find all CRL Distribution points    
+    MAIN Find all CRL Distribution points    
 """
 
 from asn1crypto import x509 as asn1_x509

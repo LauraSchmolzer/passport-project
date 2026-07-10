@@ -10,7 +10,7 @@ from PKD.repositories.cert_repo import CertificateRepository
 from PKD.repositories.ml_repo import MasterListRepository
 from PKD.repositories.country_repo import CountryRepository
 
-from PKD.db_models import MasterList,SessionLocal
+from PKD.db_models import SessionLocal
 
 import logging
 logger = logging.getLogger(__name__)
