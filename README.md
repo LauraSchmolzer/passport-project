@@ -143,7 +143,7 @@ encountered so far:
   as hard parse failures, which is why the version is pinned rather than
   left floating. The program will fail for the most recent versions of cryptography 
   and the warning in version 46.0.0 is surpressed.
-  - **Chicken-and-egg problem for Master List trust** — Verifying a Master List's signature requires 
+- **Chicken-and-egg problem for Master List trust** — Verifying a Master List's signature requires 
   already possessing the CSCA root certificate that signed it. However, the most convenient source of 
   that CSCA root is the Master List itself, creating a circular trust dependency: an automated pipeline 
   cannot bootstrap trust in the root it needs from the very document that root is meant to authenticate. 
