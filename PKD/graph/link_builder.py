@@ -1,6 +1,6 @@
-from PKD.verify.crypto_helpers import _get_aki_ski, _verify_link
+from PKD.verify.verify_cert import _verify_signature
+from PKD.verify.crypto_helpers import _get_publickey
 from PKD.db_models import CSCACertificate, CSCALink
-from collections import defaultdict
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,7 +45,8 @@ class LinkGraphBuilder:
             )
             return
 
-        if not _verify_link(link_cert, old_csca):
+        issuer_pubkey = _get_publickey(old_csca)
+        if not _verify_signature(link_cert.raw_cert, issuer_pubkey):
             logger.debug(
                 "Invalid signature", extra={
                     "country": link_cert.country.code,
