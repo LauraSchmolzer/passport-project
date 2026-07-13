@@ -22,3 +22,6 @@ soupsieve==2.8.4
 SQLAlchemy==2.0.50
 typing_extensions==4.15.0
 urllib3==2.7.0
+pycountry==26.2.16
+ldap3==2.9.1 
+pyasn1==0.6.4

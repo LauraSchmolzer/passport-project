@@ -63,9 +63,9 @@ Join table: `csca_in_ml` many-to-many between master list and CSCA certs.
 
 ![db graph](data/db_graph.png "Database structure")
 
-## Link certificate validation
+## Certificate validation
 
-A link certificate's `AuthorityKeyIdentifier` (AKI) and `SubjectKeyIdentifier`
+A certificate's `AuthorityKeyIdentifier` (AKI) and `SubjectKeyIdentifier`
 (SKI) extensions are used to locate its claimed predecessor (old CSCA) and
 successor (new CSCA) within the existing CSCA set. 
 
@@ -94,6 +94,16 @@ Data flow of validation.
 
 ![validation](data/validation.png "validation")
 Validation for RSA abstracted.
+
+## Get CRL from certificate
+
+The `CRL` folder holds functions that identify and gather CRL distribution points based on a certificate. 
+
+`get_crl_urls` builds the list of candidate URLs for a given CSCA certificate. It checks the certificate's `CRLDistributionPoints` extension, as some issuers publish a pointer to the CRL infrastructure they use (either self-hosted or from the ICAO PKD). Where no explicit point exists, or in addition to it, a predictable ICAO PKD URL is generated with the three-letter country code in `build_URL`. This is of the format `https://pkddownload1.icao.int/CRLs/CountryCode.crl` and `https://pkddownload2.icao.int/CRLs/CountryCode.crl`.
+
+Once all known URLs are retrieved, we try the URLs in `fetch_crl` which returns the first one that resolves a valid CRL. Both HTTP(S) and LDAP are supported. For HTTP(S), it is checked for a leading `0x30` byte to confirm it is a DER-encoded CRL instead of an error page and LDAP, queried via `ldap3` against the `certificateRevocationList` attribute (or whichever attribute is specified in the URL's query string).
+
+`GetCRL.get_crl` ties the two together and adds signature verification. By inputting a certificate, it resolves the URLs, fetch a CRL and then verifies the signature against a ranked list of CSCA certificates for the issuing country — not just the CSCA that signed the DS certificate being checked, since a CRL may have been issued after a key rollover. Validation is again done using the function in `PKD/verify`, just like for Link certificates. If no valid CRLs are found, `None` is returned.
 
 ## Trust Score of a Root Certificate
 

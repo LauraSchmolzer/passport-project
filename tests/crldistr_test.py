@@ -1,36 +1,35 @@
+
 from PKD.db_models import SessionLocal, CSCACertificate
-from CRL.load.get_URL import get_crl_urls
-from CRL.load.fetch_crl import fetch_crl
+from CRL.get_crl import GetCRL
 
 
 def test_ds_crl_serial_check():
     with SessionLocal() as session:
         csca_certs = session.query(CSCACertificate).all()
+        getter = GetCRL(session)
 
-        print(f"\n================ CRL FETCH ({len(csca_certs)} DS certs) ================\n")
+        print(f"\n================ CRL FETCH ({len(csca_certs)} CSCA certs) ================\n")
 
         no_crl_dp = 0
+        crl_dp_verified = 0
         countries = set()
-        crl_dp = 0
-            
-        for ds in csca_certs:
-            if ds.country.code in countries:
+
+        for csca in csca_certs:
+            if csca.country.code in countries:
                 continue
- 
-            urls = get_crl_urls(ds) or []
-    
-            if not urls:
+
+            result = getter.get_crl(csca)
+
+            if result is None:
                 no_crl_dp += 1
             else:
-                url, data = fetch_crl(urls)
-                if not data:
-                    no_crl_dp += 1
-                else:
-                    crl_dp +=1
-                    countries.add(ds.country.code)
+                raw, signing_csca = result
+                crl_dp_verified += 1
+                countries.add(csca.country.code)
+
         print(countries)
-        
-        print(f"Has crl dp {crl_dp}, has no crl dp {no_crl_dp}")
-            
+        print(f"Verified CRL found: {crl_dp_verified}, no CRL found or verified: {no_crl_dp}")
+
 
 test_ds_crl_serial_check()
+            

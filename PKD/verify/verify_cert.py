@@ -1,6 +1,3 @@
-
-from PKD.db_models import CSCACertificate
-from PKD.verify.crypto_helpers import _get_publickey
 from asn1crypto import x509 as asn1_x509
 from asn1crypto import crl as asn1_crl
 

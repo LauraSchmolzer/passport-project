@@ -15,7 +15,7 @@ class GetCRL:
     def __init__(self, session):
         self.session = session
 
-    def get_crl(self, cert) -> Optional[dict]:
+    def get_crl(self, cert) -> Optional[tuple]:
         urls = get_crl_urls(cert) or []
         if not urls:
             logger.info("No CRL distribution points found", extra={"issuer": cert.issuer_dn})
@@ -27,6 +27,7 @@ class GetCRL:
             return None
 
         candidates = self._get_candidate_cscas(cert)
+        print(candidates)
         if not candidates:
             logger.warning("No CSCA candidates on file to verify CRL signature", extra={"issuer": cert.issuer_dn})
             return None
@@ -34,14 +35,14 @@ class GetCRL:
         # Try multiple CSCAs corresponding to the country to see if it signed the CRL
         for csca in candidates:
 
-            pubkey = _get_publickey(csca.raw_cert)
+            pubkey = _get_publickey(csca)
 
             if _verify_crl_signature(raw, pubkey):
                 logger.info(
                     "CRL signature verified" ,
                     extra={"url": url, "csca_id": csca.id, "csca_not_before": csca.not_before},
                 )
-                return raw
+                return (raw, csca)
 
             logger.debug("CRL signature failed against candidate", extra={"csca_id": csca.id})
 
