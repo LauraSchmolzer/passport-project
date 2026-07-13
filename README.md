@@ -1,7 +1,9 @@
-# PKD from public MLs
+# PKD from public MLs - EXTENDED
 
 Imports and validates eMRTD PKI data — CSCA and Link certificates from public master lists — into a relational
 database for cross-referencing and trust-chain validation.
+
+EXTENDED - Store a crl file in the extended database (CRL and DS certificates). Validate and store a DS certificate.
 
 ## Requirements
 
@@ -57,11 +59,12 @@ python -m PKD.PKDimporter
 ## Database structure
 
 Core tables: `Country`, `MasterList`, `CSCACertificate`, `CSCALink`. 
+Core extended tables: `CRL`, `DSCertificate`. 
 Join table: `csca_in_ml` many-to-many between master list and CSCA certs.
 
 `CSCALink` is an edge connecting two CSCA certificates with a Link certificate. 
 
-![db graph](data/db_graph.png "Database structure")
+![db graph](data/db_graph_extended.png "Database structure")
 
 ## Link certificate validation
 

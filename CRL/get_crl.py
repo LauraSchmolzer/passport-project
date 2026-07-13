@@ -41,7 +41,7 @@ class GetCRL:
                     "CRL signature verified" ,
                     extra={"url": url, "csca_id": csca.id, "csca_not_before": csca.not_before},
                 )
-                return raw
+                return raw, csca
 
             logger.debug("CRL signature failed against candidate", extra={"csca_id": csca.id})
 
