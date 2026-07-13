@@ -1,7 +1,6 @@
 from PKD.parsers.ml_parser import parse_ml
 from PKD.load.load_ml import load_mls
 from PKD.parsers.cert_parser import parse_cert
-from collections import defaultdict
 
 from PKD.graph.link_builder import LinkGraphBuilder
 from PKD.graph.score_builder import ScoreCSCABuilder

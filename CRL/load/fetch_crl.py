@@ -10,33 +10,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def fetch_crl( urls: List[str], timeout: int = 10, user_agent: Optional[str] = None) -> tuple[str | None, bytes | None]:
-    headers = {"User-Agent": user_agent} if user_agent else {}
-
-    for url in urls:
-        scheme = urlparse(url).scheme.lower()
-
-        try:
-            if scheme in ("http", "https"):
-                data = fetch_http_crl(url, headers, timeout)
-            elif scheme == "ldap":
-                data = fetch_ldap_crl(url)
-            else:
-                logger.debug("Unsupported CRL URL scheme: %s", url)
-                continue
-        except Exception as exc:
-            logger.warning("Failed %s: %s", url, exc)
-            continue
-
-        if data is None:
-            continue
-
-        logger.info("Fetched %s (%d bytes)", url, len(data))
-        return url, data
-
-    return None, None
-
-
 def fetch_http_crl( url: str, headers: dict, timeout: int) -> bytes | None:
     resp = requests.get(url, headers=headers, timeout=timeout)
     resp.raise_for_status()
@@ -80,3 +53,29 @@ def fetch_ldap_crl(url: str) -> bytes | None:
 
         values = conn.entries[0][attribute].raw_values
         return values[0] if values else None
+    
+def fetch_crl( urls: List[str], timeout: int = 10, user_agent: Optional[str] = None) -> tuple[str | None, bytes | None]:
+    headers = {"User-Agent": user_agent} if user_agent else {}
+
+    for url in urls:
+        scheme = urlparse(url).scheme.lower()
+
+        try:
+            if scheme in ("http", "https"):
+                data = fetch_http_crl(url, headers, timeout)
+            elif scheme == "ldap":
+                data = fetch_ldap_crl(url)
+            else:
+                logger.debug("Unsupported CRL URL scheme: %s", url)
+                continue
+        except Exception as exc:
+            logger.warning("Failed %s: %s", url, exc)
+            continue
+
+        if data is None:
+            continue
+
+        logger.info("Fetched %s (%d bytes)", url, len(data))
+        return url, data
+
+    return None, None

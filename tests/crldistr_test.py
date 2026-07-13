@@ -1,6 +1,6 @@
 from PKD.db_models import SessionLocal, CSCACertificate
-from CRL.get_URL import get_crl_urls
-from CRL.fetch_crl import fetch_crl
+from CRL.load.get_URL import get_crl_urls
+from CRL.load.fetch_crl import fetch_crl
 
 
 def test_ds_crl_serial_check():
