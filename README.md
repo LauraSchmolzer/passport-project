@@ -193,8 +193,8 @@ Prints inconsistencies of certificates. Checks if each sha256 fingerprint maps t
 (so if each fingerprint is unique) and if all countries MLs publishes the same and unqiue fingerprint 
 for the same entry (country, org, not_after).
 
-Results expected (14-07-2026) : no sha256 fingerprints seem to be duplicated, this should also not eb possible.
-Moreover, in some cases teh same entry maps to multiple fingerprints. An example of this is: 
+Results expected (14-07-2026) : no sha256 fingerprints seem to be duplicated.
+Moreover, in some cases the same entry maps to multiple fingerprints. An example of this is: 
 
   GR/Hellenic Republic/2026-11-07 21:59:59: 
   {'NL': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b'}, 
