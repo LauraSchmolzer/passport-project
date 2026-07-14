@@ -12,7 +12,7 @@ def test_cert_hash_integrity():
 
     with SessionLocal() as session:
         all_certs = session.query(CSCACertificate).all()
-        # ___ Check 1: each sha256_finger maps to exactly one row ________________
+        # ___ each sha256_finger maps to exactly one row ________________
         hash_to_certs = defaultdict(list)
         for cert in all_certs:
             hash_to_certs[cert.sha256_finger].append(cert)
@@ -21,7 +21,7 @@ def test_cert_hash_integrity():
         assert not collisions, (
             f"sha256_finger not unique, duplicate rows found for: {list(collisions.keys())}"
         )
-        # ___ Check 2: do all MLs that publish a (country, org, not_after) entry _______
+        # ___ do all MLs that publish a (country, org, not_after) entry _______
 
         for is_link in (False, True):
             per_ml_sets = defaultdict(dict)

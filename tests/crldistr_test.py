@@ -2,10 +2,13 @@
 from PKD.db_models import SessionLocal, CSCACertificate
 from CRL.get_crl import GetCRL
 
+INCLUDE_ICAO = False
 
 def test_ds_crl_serial_check():
     with SessionLocal() as session:
+        # Queries all CSCA Certs in the database
         csca_certs = session.query(CSCACertificate).all()
+
         getter = GetCRL(session)
 
         print(f"\n================ CRL FETCH ({len(csca_certs)} CSCA certs) ================\n")
@@ -18,7 +21,7 @@ def test_ds_crl_serial_check():
             if csca.country.code in countries:
                 continue
 
-            result = getter.get_crl(csca)
+            result = getter.get_crl(csca, INCLUDE_ICAO)
 
             if result is None:
                 no_crl_dp += 1

@@ -10,16 +10,27 @@ from PKD.verify.verify_cert import _verify_crl_signature
 import logging
 logger = logging.getLogger(__name__)
 
+_ICAO_PREFIXES = (
+    "https://pkddownload1.icao.int/CRLs/",
+    "https://pkddownload2.icao.int/CRLs/",
+)
+
+def filter_icao_urls(urls: list[str]) -> list[str]:
+    return [u for u in urls if not u.startswith(_ICAO_PREFIXES)]
 
 class GetCRL:
     def __init__(self, session):
         self.session = session
 
-    def get_crl(self, cert) -> Optional[tuple]:
+    def get_crl(self, cert, icao = True) -> Optional[tuple]:
         urls = get_crl_urls(cert) or []
+
         if not urls:
             logger.info("No CRL distribution points found", extra={"issuer": cert.issuer_dn})
             return None
+        
+        if not icao:
+            urls = filter_icao_urls(urls)
 
         url, raw = fetch_crl(urls)
         if raw is None:
@@ -27,7 +38,6 @@ class GetCRL:
             return None
 
         candidates = self._get_candidate_cscas(cert)
-        print(candidates)
         if not candidates:
             logger.warning("No CSCA candidates on file to verify CRL signature", extra={"issuer": cert.issuer_dn})
             return None
