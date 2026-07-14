@@ -184,8 +184,8 @@ Here, 'ZZ' can be found in the ICAO PKD but is likely from certificates with unk
 ### CRL Distribution points  `crldistr_test.py`
 Loops through all CSCA certificates in the database to check for CRL distribution point.
 Stores and prints the countries where it succesfully fetched a CRL. Urls that point to
-the ICAO database can be filtered out by setting teh parameter `INCLUDE_ICAO = False`.
-The test can take a while to finish, depending on how many certifiactes and URLs are available.
+the ICAO database can be filtered out by setting the parameter `INCLUDE_ICAO = False`.
+The test can take a while to finish, depending on how many certificates and URLs are available.
 Results expected (14-07-2026) : verified CRLs no ICAO : 37, with ICAO : 86.
 
 ### Fingerprint irregularities `fingerprint_test.py`
