@@ -1,4 +1,6 @@
-" PostgreSQL database for PKI objects "
+"""  
+    Database for PKI objects 
+"""
 
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, Text, DateTime, LargeBinary, Boolean, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
@@ -30,7 +32,7 @@ class Country(Base):
     __tablename__ = "country"
 
     id          = Column(Integer, primary_key=True)
-    code        = Column(String(3), nullable=False, index=True) # Conists of 3 int max                      # Consists of 128 int max
+    code        = Column(String(3), nullable=False, index=True) # Conists of 3 int max                 
     organization = Column(String(256))  # disambiguates sub-issuers sharing a country code (e.g. CN vs Macau SAR)
 
     __table_args__ = (UniqueConstraint("code", "organization", name="uq_country_code_org"),)
@@ -44,7 +46,7 @@ class MasterList(Base):
     __tablename__   = "master_list"
 
     # To not import the same ML twice
-    __table_args__  = (UniqueConstraint("country_id", "sequence_number"),)  # note the comma
+    __table_args__  = (UniqueConstraint("country_id", "sequence_number"),)  
 
     id              = Column(Integer, primary_key=True)
     country_id      = Column(Integer, ForeignKey("country.id"), index=True)

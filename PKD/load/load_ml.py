@@ -6,6 +6,9 @@ from PKD.load.mls import SOURCES, HashSource
 from PKD.load.fetch_helpers import fetch
 from PKD.load.sha_helpers import sha1, sha256, find_sha
 
+import logging
+logger = logging.getLogger(__name__)
+
 @dataclass
 class MLData:
     country : str
@@ -16,7 +19,11 @@ class MLData:
 
 def load_mls() -> Iterator[MLData]:
     for source in SOURCES:
-        raw = fetch(source.ml_url)
+        try:
+            raw = fetch(source.ml_url)
+        except Exception as e:
+            logger.warning("Failed to fetch ML for %s: %s", source.code, e)
+            continue
 
         raw_sha = sha256(raw)
 

@@ -13,7 +13,6 @@ iniconfig==2.3.0
 packaging==26.2
 pip_system_certs==5.3
 pluggy==1.6.0
-psycopg2-binary==2.9.12
 pycparser==3.0
 Pygments==2.20.0
 python-dotenv==1.2.2

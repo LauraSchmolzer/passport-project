@@ -3,6 +3,9 @@
 Imports and validates eMRTD PKI data — CSCA and Link certificates from public master lists — into a relational
 database for cross-referencing and trust-chain validation.
 
+Abstract overview of main import file: `PKD/PKDimporter.py`
+![pipeline](data/pipeline.png "Full pipeline overview")
+
 ## Requirements
 
 - Python 3.11+
@@ -17,9 +20,8 @@ database for cross-referencing and trust-chain validation.
 pip install -r requirements.txt
 ```
 
-Set the database connection string in `.env`:
-
-I personally used sqlite for simplicity.
+Set the database connection string in `.env`. For development and testing I used SQLite, 
+but for actual use Postgres is the target.
 ```
 DB_URL=sqlite:///data/passport_pki.db
 ```
@@ -165,6 +167,8 @@ encountered so far:
   root, passing its own internal signature check.
 
 ## Tests
+
+Most of the tests are inspection scripts for the data, not assertions.
 
 ### Signature test (pytest) `signature_test.py`
 - Covers if the cryptographic verification logic itself is implemented correctly: RSA and EC signatures 

@@ -57,7 +57,6 @@ def get_crl_distribution_urls(cert: asn1_x509.Certificate) -> Optional[str]:
     urls: List[str] = []
     for point in crl_extn:
         distr_point = point.get('distribution_point')
-        print(distr_point)
         if not distr_point:
             continue
         for name in distr_point:
