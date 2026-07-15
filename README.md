@@ -188,8 +188,8 @@ Here, 'ZZ' can be found in the ICAO PKD but is likely from certificates with unk
 ### CRL Distribution points  `crldistr_test.py`
 Loops through all CSCA certificates in the database to check for CRL distribution point.
 Stores and prints the countries where it succesfully fetched a CRL. Urls that point to
-the ICAO database can be filtered out by setting teh parameter `INCLUDE_ICAO = False`.
-The test can take a while to finish, depending on how many certifiactes and URLs are available.
+the ICAO database can be filtered out by setting the parameter `INCLUDE_ICAO = False`.
+The test can take a while to finish, depending on how many certificates and URLs are available.
 Results expected (14-07-2026) : verified CRLs no ICAO : 37, with ICAO : 86.
 
 ### Fingerprint irregularities `fingerprint_test.py`
@@ -197,8 +197,8 @@ Prints inconsistencies of certificates. Checks if each sha256 fingerprint maps t
 (so if each fingerprint is unique) and if all countries MLs publishes the same and unqiue fingerprint 
 for the same entry (country, org, not_after).
 
-Results expected (14-07-2026) : no sha256 fingerprints seem to be duplicated, this should also not eb possible.
-Moreover, in some cases teh same entry maps to multiple fingerprints. An example of this is: 
+Results expected (14-07-2026) : no sha256 fingerprints seem to be duplicated.
+Moreover, in some cases the same entry maps to multiple fingerprints. An example of this is: 
 
   GR/Hellenic Republic/2026-11-07 21:59:59: 
   {'NL': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b'}, 
