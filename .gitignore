@@ -6,3 +6,4 @@ venv/
 *.db
 __MACOSX/
 .DS_Store
+LICENSE
