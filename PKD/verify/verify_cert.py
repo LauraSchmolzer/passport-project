@@ -17,7 +17,6 @@ _HASH_ALGOS = {
     "sha512":   hashes.SHA512(),
 }
 
-
 def _verify_signature_generic(
     tbs_bytes: bytes,
     signature: bytes,

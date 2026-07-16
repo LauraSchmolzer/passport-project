@@ -61,7 +61,7 @@ python -m PKD.PKDimporter
 
 ## Database structure
 
-Core tables: `Country`, `MasterList`, `CSCACertificate`, `CSCALink`. 
+Core tables: `Country`, `MasterList`, `CSCACertificate`, `CSCALink`.
 Join table: `csca_in_ml` many-to-many between master list and CSCA certs.
 
 `CSCALink` is an edge connecting two CSCA certificates with a Link certificate. 

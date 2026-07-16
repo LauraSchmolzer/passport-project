@@ -46,6 +46,7 @@ class LinkGraphBuilder:
             return
 
         issuer_pubkey = _get_publickey(old_csca)
+
         if not _verify_signature(link_cert.raw_cert, issuer_pubkey):
             logger.debug(
                 "Invalid signature", extra={
