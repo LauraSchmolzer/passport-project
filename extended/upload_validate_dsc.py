@@ -14,7 +14,7 @@ from PKD.graph.crl_builder import CRLGraphBuilder
 
 from asn1crypto import x509 as asn1_x509
 
-from PKD.db_models import SessionLocal, CSCACertificate, DSCertificate
+from PKD.db_models import SessionLocal, CSCACertificate
 
 from pathlib import Path
 ICAO_LDIF_PATH = Path("data/icaopkd-001-complete-10203.ldif")

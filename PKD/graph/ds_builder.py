@@ -8,6 +8,13 @@ from PKD.db_models import CSCACertificate, DSCertificate
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime, timezone
+
+def is_within_validity(not_before: datetime, not_after: datetime, at: datetime | None = None) -> bool:
+    at = at or datetime.now(timezone.utc)
+    return not_before <= at <= not_after
+
+
 
 class DSGraphBuilder:
     def __init__(self, session):
@@ -46,9 +53,13 @@ class DSGraphBuilder:
             )
             return
 
-        # link it
+        # check validity of the DS certificate
         ds_cert.csca_id = issuing_csca.id
-
+        if not is_within_validity(ds_cert.not_before, ds_cert.not_after):
+            logger.warning("DSC signature valid but certificate outside validity window",extra={"ds_id": ds_cert.id})
+            ds_cert.signature_valid = False   # or a separate `date_valid` flag — see below
+            return
+        
         # verify signature
         try:
             issuer_pubkey = _get_publickey(issuing_csca)
