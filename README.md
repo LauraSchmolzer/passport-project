@@ -5,6 +5,9 @@ database for cross-referencing and trust-chain validation.
 
 EXTENDED - Store a crl file in the extended database (CRL and DS certificates). Validate and store a DS certificate.
 
+Abstract overview of main import file: `PKD/PKDimporter.py`
+![pipeline](data/pipeline.png "Full pipeline overview")
+
 ## Requirements
 
 - Python 3.11+
@@ -19,9 +22,8 @@ EXTENDED - Store a crl file in the extended database (CRL and DS certificates). 
 pip install -r requirements.txt
 ```
 
-Set the database connection string in `.env`:
-
-I personally used sqlite for simplicity.
+Set the database connection string in `.env`. For development and testing I used SQLite, 
+but for actual use Postgres is the target.
 ```
 DB_URL=sqlite:///data/passport_pki.db
 ```
@@ -51,6 +53,9 @@ All links are found in:
 ```bash
 PKD/load/mls.py
 ```
+Correspondingly, if the ML can be validated with a thumbprint, the link pointing to the thumbprint page is also included.
+
+Importer can be run by:
 
 ```bash
 python -m PKD.PKDimporter
@@ -58,17 +63,17 @@ python -m PKD.PKDimporter
 
 ## Database structure
 
-Core tables: `Country`, `MasterList`, `CSCACertificate`, `CSCALink`. 
-Core extended tables: `CRL`, `DSCertificate`. 
+Core tables: `Country`, `MasterList`, `CSCACertificate`, `CSCALink`.
 Join table: `csca_in_ml` many-to-many between master list and CSCA certs.
+Extended tables: `CRL`, `DSCertificate`.
 
 `CSCALink` is an edge connecting two CSCA certificates with a Link certificate. 
 
 ![db graph](data/db_graph_extended.png "Database structure")
 
-## Link certificate validation
+## Link Certificate validation
 
-A link certificate's `AuthorityKeyIdentifier` (AKI) and `SubjectKeyIdentifier`
+A certificate's `AuthorityKeyIdentifier` (AKI) and `SubjectKeyIdentifier`
 (SKI) extensions are used to locate its claimed predecessor (old CSCA) and
 successor (new CSCA) within the existing CSCA set. 
 
@@ -97,6 +102,16 @@ Data flow of validation.
 
 ![validation](data/validation.png "validation")
 Validation for RSA abstracted.
+
+## Get CRL from certificate
+
+The `CRL` folder holds functions that identify and gather CRL distribution points based on a certificate. 
+
+`get_crl_urls` builds the list of candidate URLs for a given CSCA certificate. It checks the certificate's `CRLDistributionPoints` extension, as some issuers publish a pointer to the CRL infrastructure they use (either self-hosted or from the ICAO PKD). Where no explicit point exists, or in addition to it, a predictable ICAO PKD URL is generated with the three-letter country code in `build_URL`. This is of the format `https://pkddownload1.icao.int/CRLs/CountryCode.crl` and `https://pkddownload2.icao.int/CRLs/CountryCode.crl`.
+
+Once all known URLs are retrieved, we try the URLs in `fetch_crl` which returns the first one that resolves a valid CRL. Both HTTP(S) and LDAP are supported. For HTTP(S), it is checked for a leading `0x30` byte to confirm it is a DER-encoded CRL instead of an error page and LDAP, queried via `ldap3` against the `certificateRevocationList` attribute (or whichever attribute is specified in the URL's query string).
+
+`GetCRL.get_crl` ties the two together and adds signature verification. By inputting a certificate, it resolves the URLs, fetch a CRL and then verifies the signature against a ranked list of CSCA certificates for the issuing country — not just the CSCA that signed the DS certificate being checked, since a CRL may have been issued after a key rollover. Validation is again done using the function in `PKD/verify`, just like for Link certificates. If no valid CRLs are found, `None` is returned.
 
 ## Trust Score of a Root Certificate
 
@@ -153,4 +168,67 @@ encountered so far:
   Verifying a Master List's signature against a CSCA certificate bundled inside that same Master List 
   would provide no real security, since a forged Master List could simply include a matching forged CSCA 
   root, passing its own internal signature check.
+
+## Tests
+
+Most of the tests are inspection scripts for the data, not assertions.
+
+### Signature test (pytest) `signature_test.py`
+- Covers if the cryptographic verification logic itself is implemented correctly: RSA and EC signatures 
+  verify and fail correctly and unsupported key types and hash algorithms are rejected. 
+- AKI and SKI extraction is done correctly and models teh actual trust-chain relationships
+  (so self-signed means AKI == SKI, and for DS certificates own AKI != CSCA SKI).
+- The explicit EC curve parameters fallback is proven end-to-end: extraction succeds, 
+  the curve resolves correctly and the extracted key verifies the real signature.
+
+`python -m pytest tests/signature_test.py -v`
+
+### Country Coverage `signature_test.py`
+Prints which countries are in each master list and print the missing countries.
+Missing countries expected (14-07-2026) : ['AM', 'MV', 'PY', 'ZZ']
+Here, 'ZZ' can be found in the ICAO PKD but is likely from certificates with unknown issuers.
+
+### CRL Distribution points  `crldistr_test.py`
+Loops through all CSCA certificates in the database to check for CRL distribution point.
+Stores and prints the countries where it succesfully fetched a CRL. Urls that point to
+the ICAO database can be filtered out by setting the parameter `INCLUDE_ICAO = False`.
+The test can take a while to finish, depending on how many certificates and URLs are available.
+Results expected (14-07-2026) : verified CRLs no ICAO : 37, with ICAO : 86.
+
+### Fingerprint irregularities `fingerprint_test.py`
+Prints inconsistencies of certificates. Checks if each sha256 fingerprint maps to exactly one row 
+(so if each fingerprint is unique) and if all countries MLs publishes the same and unqiue fingerprint 
+for the same entry (country, org, not_after).
+
+Results expected (14-07-2026) : no sha256 fingerprints seem to be duplicated.
+Moreover, in some cases the same entry maps to multiple fingerprints. An example of this is: 
+
+  GR/Hellenic Republic/2026-11-07 21:59:59: 
+  {'NL': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b'}, 
+  'DE': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b'}, 
+  'IT': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b', 'b0038c32b45e3918e3b9e7fe45f3d275f2a939ddbf35ff41d30ef47b5e72e990'}, 
+  'SE': {'ee98bc2927facdf7d8e1661847a0ff5a634ede543896773e2d501db12624931b', 'b0038c32b45e3918e3b9e7fe45f3d275f2a939ddbf35ff41d30ef47b5e72e990'}}
+
+In every case observed so far, the same second fingerprint (`b0038c32...` here) appears only in the IT and SE MLs,
+and both always agree with NL/DE on the first. This is not caused by link certificates, which are filtered
+out separately before this check runs. 
+
+When further investigated the aki and ski, it seemed to have two different keypairs, but with the same signature algorithms. 
+It seems that Greece has two legitimate CSCA certificates that either NL/DE do not trust or are not aware of.
+ 
+### Link Chain for a country `link_chain_test.py`
+This shows which link certificates exist for each CSCA root certificate for a specific country.
+It shows the validity period, in which MLs the certificate exists, the hash, organization, ID and then
+the outgoing links with the hash of which next certificate is point to together with the link certificate hash
+and for the incoming links with the hash of which certificate points to it and the link certificate hash.
+
+This makes you able to investigate a link chain of a country. Sometimes certificates are isolated, this could be due
+to a country not issueing link certificates or a root certificate is too old to have it implemented.
+
+### Score CSCA root `score_test.py`
+This prints the scores of all root certificates in the datebase.
+Results expected (14-07-2026) : 
+![scores](data/scores.png "Scores")
+AR, GR, IN, and SM appear in more than one category, indicating multiple CSCA certificates per
+country code with differing trust scores.
 

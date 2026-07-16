@@ -38,6 +38,8 @@ class Country(Base):
 
     master_lists = relationship("MasterList", back_populates="country")
     csca_certs = relationship("CSCACertificate", back_populates="country")
+    ds_certs = relationship("DSCertificate", back_populates="country")
+    crls = relationship("CRL", back_populates="country")
 
 
 class MasterList(Base):
@@ -78,6 +80,11 @@ class CSCACertificate(Base):
 
     master_lists    = relationship("MasterList", secondary=csca_in_ml, back_populates="csca_certs")
     country         = relationship("Country", back_populates="csca_certs")
+    ds_certs        = relationship(
+        "DSCertificate",
+        foreign_keys="DSCertificate.csca_id",
+        back_populates="issuing_csca",
+    )
 
 class CSCALink(Base):
     __tablename__ = "csca_link"

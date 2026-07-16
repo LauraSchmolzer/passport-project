@@ -6,7 +6,8 @@ It verifies link certificates and reconstructs relationships using CSCALink edge
 from PKD.db_models import CSCACertificate, CSCALink, SessionLocal
 from sqlalchemy import or_
 
-COUNTRY = "CN"
+COUNTRY = "LT"
+
 
 def test_cert_linkgraph():
     with SessionLocal() as session:
@@ -48,6 +49,7 @@ def test_cert_linkgraph():
         for i, csca in enumerate(certs):
             print(f"Generation {i}")
             print(f"  ID:           {csca.id}")
+            print(f"  Organization: {csca.country.organization}")
             print(f"  Hash:         {csca.sha256_finger[:16]}...")
             print(f"  Valid:        {csca.not_before.date()} -> {csca.not_after.date()}")
             print(f"  MLs:          {[ml.country.code for ml in csca.master_lists]}")
