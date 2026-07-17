@@ -139,6 +139,34 @@ A CSCA root gains one trust point for each of the following, independently satis
 
 This is not a complete implementation of ICAO's methodology: ICAO's own criteria also include direct bilateral exchange with a trusted contact at the issuing authority, which this implementation cannot replicate.
 
+## Extended functions
+
+The extended functions that populate the added tables exist in `extended`.
+
+- `extended/upload_crl.py`: fetches all CRLs for the currently loaded CSCAs and loads
+  them into the database. It uses `CRL/get_crl.py`, which validates each CRL's signature
+  against the CSCA and relates it. You can include or exclude the ICAO distribution points
+  by setting `INCLUDE_ICAO`.
+
+- `extended/upload_validate_dsc.py`: demonstrates how a DS certificate is validated,
+  linked to its issuing CSCA, and checked for revocation. Since DS certificates can only
+  realistically be obtained from real passports or from the ICAO PKD, this script reads
+  from a downloaded ICAO PKD LDIF snapshot.
+
+  1. Download the PKI Objects LDIF file from the [ICAO PKD download page](https://pkddownload.icao.int/)
+     (requires agreeing to their Terms & Conditions).
+  2. Set `ICAO_LDIF_PATH` in `.env` to the downloaded file's path.
+  3. Run the script. For each DS certificate found, it parses and stores the certificate,
+     then runs `DSGraphBuilder` to link it to its issuing CSCA and verify its signature,
+     and `CRLGraphBuilder` to check it against any known CRLs for revocation.
+
+  **Important** the ICAO PKD LDIF file is not permitted for commercial use. This script is
+  intended for testing only.
+
+  You must run first `PKDimporter.py` then `upload_crl.py` and lastly `upload_validate_dsc.py`, since the 
+  script links DSCs against CSCAs and CRLs that are expected to already be in the database.
+
+
 ## Known issues and data quirks
 
 Real-world ICAO PKD data is not uniformly spec-conformant. Confirmed cases
@@ -189,11 +217,11 @@ Missing countries expected (14-07-2026) : ['AM', 'MV', 'PY', 'ZZ']
 Here, 'ZZ' can be found in the ICAO PKD but is likely from certificates with unknown issuers.
 
 ### CRL Distribution points  `crldistr_test.py`
-Loops through all CSCA certificates in the database to check for CRL distribution point.
-Stores and prints the countries where it succesfully fetched a CRL. Urls that point to
-the ICAO database can be filtered out by setting the parameter `INCLUDE_ICAO = False`.
+Loops through all CRLs and check which serial numbers are found.
+You can set `INCLUDE_ICAO = False` to not include the ICAO distribution points.
 The test can take a while to finish, depending on how many certificates and URLs are available.
-Results expected (14-07-2026) : verified CRLs no ICAO : 37, with ICAO : 86.
+Results expected (14-07-2026) : verified CRLs no ICAO : 37 countries , with ICAO : 86 countries.
+AQ total of 100 CRLs including ICAO, whereof 66 empty.
 
 ### Fingerprint irregularities `fingerprint_test.py`
 Prints inconsistencies of certificates. Checks if each sha256 fingerprint maps to exactly one row 
@@ -232,3 +260,7 @@ Results expected (14-07-2026) :
 AR, GR, IN, and SM appear in more than one category, indicating multiple CSCA certificates per
 country code with differing trust scores.
 
+### DS Certificate `dsc_test.py`
+This prints the revoked DS Certificate number with the corresponding country and CRL.
+Results expected (17-07-2026) : only one DS certificates who were in the .ldif file are revoked.
+Two are printed, DS certificate for AO with CSCA 71 in CRL 20. These certifacetes have different fingerprints.

@@ -16,8 +16,13 @@ from asn1crypto import x509 as asn1_x509
 
 from PKD.db_models import SessionLocal, CSCACertificate
 
+import os
 from pathlib import Path
-ICAO_LDIF_PATH = Path("data/icaopkd-001-complete-10203.ldif")
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ICAO_LDIF_PATH = Path(os.getenv("ICAO_LDIF_PATH", "data/icaopkd-001-complete-10203.ldif"))
 
 def get_candidate_cscas(session, country_id: int, aki: bytes | None) -> list[CSCACertificate]:
     candidates = (
@@ -34,6 +39,7 @@ def upload_validate_dsc():
         country_repo = CountryRepository(session)
 
         with ICAO_LDIF_PATH.open("rb") as f:
+            print("===== Start loading DS Certificates =====")
             parser = ParseLDIF(f)
 
             for data in parser.process_file():
@@ -57,7 +63,7 @@ def upload_validate_dsc():
             session.commit()
 
             # Link CRL to CSCAs
-            CRLGraphBuilder(session).build()
+            CRLGraphBuilder(session).build_revocations()
 
             session.commit()
     

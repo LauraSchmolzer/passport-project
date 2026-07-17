@@ -12,8 +12,9 @@ from datetime import datetime, timezone
 
 def is_within_validity(not_before: datetime, not_after: datetime, at: datetime | None = None) -> bool:
     at = at or datetime.now(timezone.utc)
+    if at.tzinfo is not None:
+        at = at.replace(tzinfo=None)
     return not_before <= at <= not_after
-
 
 
 class DSGraphBuilder:

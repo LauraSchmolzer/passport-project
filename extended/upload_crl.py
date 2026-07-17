@@ -8,6 +8,8 @@ from CRL.get_crl import GetCRL
 
 from PKD.db_models import SessionLocal, CSCACertificate
 
+from PKD.graph.crl_builder import CRLGraphBuilder
+
 INCLUDE_ICAO = True
 
 def extend_with_CRL():
