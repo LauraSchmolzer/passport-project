@@ -20,8 +20,8 @@ def test_all_crls():
 
             if len(crl.revoked_serials) == 0:
                 empty += 1
-            
-            countries.add(crl.country.code)
+            else:
+                countries.add(crl.country.code)
         
         print(f"======== THERE ARE {empty} EMPTY CRLS ===========\n")
         print(f"======== IN {sorted(countries), len(countries)} THERE EXIST NON-EMPTY CRLS ===========\n")

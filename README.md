@@ -13,8 +13,9 @@ Abstract overview of main import file: `PKD/PKDimporter.py`
 - `asn1crypto`
 - OpenSSL CLI available on `PATH` (used as a fallback for explicit-curve EC keys)
 - PostgreSQL
+- ldif for LDIFParser
 
-## Setup
+## Setup & running the importer
 
 ```bash
 pip install -r requirements.txt
@@ -23,41 +24,60 @@ pip install -r requirements.txt
 Set the database connection string in `.env`. For development and testing I used SQLite, 
 but for actual use Postgres is the target.
 ```
-DB_URL=sqlite:///data/passport_pki.db
+DB_URL = sqlite:///data/passport_pki.db
 ```
-
-## Country scope
-
-Master lists are currently downloaded and imported for:
-
-| Country | Code |
-|---|---|
-| Netherlands | NL |
-| Italy | IT |
-| Germany | DE |
-| Sweden | SE |
-
-## Running the importer
-
-This downloads the MLs from public websites.
-Please first verify links before running the program to ensure safety.
-- [The Dutch National Public Key Directory](https://www.npkd.nl)
-- [BSI Nundesamt für Sicherheit in der Informationstechnik](https://www.bsi.bund.de)
-- [Ministero dell'Interno](https://www.csca-ita.interno.gov.it)
-- [Polisen Sverige](http://cert.polisen.se)
-
-All links are found in: 
-
-```bash
-PKD/load/mls.py
+Besides that, also set the paths to the files you will be parsing. So one to the ICAO PKD file for MLs and one for the other PKI objects.
 ```
-Correspondingly, if the ML can be validated with a thumbprint, the link pointing to the thumbprint page is also included.
+ICAOPKD_ML_PATH = 'some url'
+ICAOPKD_CRL_DS_PATH = 'some url'
+```
 
 Importer can be run by:
 
 ```bash
 python -m PKD.PKDimporter
 ```
+
+
+## Country scope
+
+Master lists currently included in the ICAO PKD:
+
+| Country | Code |
+|---|---|
+| Angola | AO |
+| Canada | CA |
+| Switzerland | CH | 
+| Germany | DE |
+| Spain | ES |
+| France | FR |
+| Hungary | HU |
+| India | IN |
+| Italy | IT |
+| Netherlands | NL |
+| Romania | RO |
+| Sweden | SE |
+| United Nations | UN |
+
+Besides these, also the following countries who only share their own country CSCA:
+| Country | Code |
+|---|---|
+| Austria | AT |
+| Bangladesh | BD |
+| Botswana | BW |
+| Cameroon | CM |
+| Croatia | CR |
+| Ecuador | EC |
+| Finland | FI |
+| Latvia | LV |
+| Moldova | MD |
+| Mongolia | MN |
+| Norway | NO |
+| Seychelles| SC |
+| Ukraine | UA | 
+| Uganda | UG |
+| Uzbekistan | UZ |
+
 
 ## Database structure
 
@@ -130,7 +150,6 @@ A CSCA root gains one trust point for each of the following, independently satis
 
 This is not a complete implementation of ICAO's methodology: ICAO's own criteria also include direct bilateral exchange with a trusted contact at the issuing authority, which this implementation cannot replicate.
 
-## .ldif parser
 
 ## Known issues and data quirks
 
@@ -182,9 +201,9 @@ Each country is covered using the ICAO PKD. 13 MLs are shared where there exist 
 
 ### CRL Distribution points  `crldistr_test.py`
 Loops through all CRLs and check which serial numbers are found.
-The test can take a while to finish, depending on how many certificates and URLs are available.
-Results expected : verified CRLs no ICAO : 37 countries , with ICAO : 86 countries.
-AQ total of 100 CRLs including ICAO, whereof 66 empty.
+
+Results expected : 75 CRLs in total, whereof 51 are empty and 24 non-empty.
+It covers 71 countries, some countries have two CRLs where usually one is empty.
 
 ### Fingerprint irregularities `fingerprint_test.py`
 Prints inconsistencies of certificates. Checks if each sha256 fingerprint maps to exactly one row 
