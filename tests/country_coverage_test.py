@@ -26,18 +26,21 @@ def test_which_countries():
                 countries.add(cert.country.code)
 
             print(f"Master list : {ml.country.code} contains {sorted(countries)}" )
+            print("\n")
+            
 
-def test_cert_hash_integrity():
+def test_missing_countries():
     countries = set()
     with SessionLocal() as session:
         all_certs = session.query(CSCACertificate).all()
         for cert in all_certs:
             countries.add(cert.country.code)
 
-    
     missing = eMRTD_participants.difference(countries)
+    print("="*70)
     print(f"Missing countries {sorted(missing), len(missing)} from total {len(eMRTD_participants)}")
+    print("="*70)
 
-test_cert_hash_integrity()
-print("\n")
 test_which_countries()
+
+test_missing_countries()

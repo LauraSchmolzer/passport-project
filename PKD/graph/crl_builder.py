@@ -5,7 +5,7 @@
 from PKD.verify.verify_cert import _verify_crl_signature, _get_publickey
 from PKD.db_models import CSCACertificate, CRL, DSCertificate
 
-import datetime
+from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
 

@@ -5,6 +5,7 @@ from PKD.parsers.cert_parser import parse_cert
 from PKD.parsers.crl_parser import parse_crl
 
 from PKD.graph.link_builder import LinkGraphBuilder
+from PKD.graph.score_builder import ScoreCSCABuilder
 from PKD.graph.crl_builder import CRLGraphBuilder
 from PKD.graph.ds_builder import DSGraphBuilder
 
@@ -44,9 +45,9 @@ class PKDImporter:
         logger.info("Starting PKD import")
 
         with ldif_ml_file.open("rb") as f:
-            parser = ParseLDIF(f)
+            parser_1 = ParseLDIF(f)
 
-            for ml_data in parser.process_file():
+            for ml_data in parser_1.process_file():
                 logger.info("Processing ML for %s", ml_data.country)
                 country = self.country_repo.get_or_create(ml_data.country)
                 ml = self.ml_repo.get_or_create(ml_data, country)
@@ -68,15 +69,25 @@ class PKDImporter:
                     )
 
                     self.cert_repo.create(parsed, cert_country, ml)
+        
+        session.commit()
 
         logger.info("Starting CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link graph construction complete")
+
+        session.commit()
+
+        logger.info("Staring CSCA scoring")
+        ScoreCSCABuilder(self.session).score()
+        logger.info("CSCA scoring complete")
+
+        session.commit()
         
         with ldif_ds_crl_file.open("rb") as f:
-            parser = ParseLDIF(f)
+            parser_2 = ParseLDIF(f)
 
-            for data in parser.process_file():
+            for data in parser_2.process_file():
                 # Parse and add DS
                 if data.kind == RecordKind.DS:
                     cert = asn1_x509.Certificate.load(data.raw)
@@ -90,13 +101,18 @@ class PKDImporter:
                     country = self.country_repo.get_or_create(parsed_crl.issuer_country)
                     self.crl_repo.create(parsed_crl, country)
                     continue
-
+            
+            session.commit()
             # Link DS to CSCA 
             logger.info("Starting DS to CSCA graph construction")
             DSGraphBuilder(self.session).build()
+
+            session.commit()
             # Link CRL to CSCAs
             logger.info("Starting CRL to CSCA + DS revocation graph construction")
             CRLGraphBuilder(self.session).build()
+
+            session.commit()
         
 
 
@@ -107,12 +123,6 @@ if __name__ == "__main__":
         importer = PKDImporter(session)
         
         importer.parse(Path(URL_ML),Path(URL_DS_CRL))
-        session.commit()
-
-        matrix = defaultdict(set)
-
-        for ml in session.query(MasterList).all():
-            ml_country = ml.country.code
 
         session.close()
 

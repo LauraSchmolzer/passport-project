@@ -15,7 +15,6 @@ class CountryRepository:
 
         country = Country(
             code=code.upper(),
-            name=code.upper(),
             organization=organization,
         )
 
