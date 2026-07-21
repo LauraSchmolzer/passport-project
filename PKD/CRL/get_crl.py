@@ -4,12 +4,12 @@
 
 from typing import Optional, Sequence
 
-from CRL.load.get_URL import get_crl_urls
-from CRL.load.fetch_crl import fetch_crl
+from PKD.CRL.load.get_URL import get_crl_urls
+from PKD.CRL.load.fetch_crl import fetch_crl
 
 from PKD.db_models import CSCACertificate
-from PKD.verify.crypto_helpers import _get_publickey
-from PKD.verify.verify_cert import _verify_crl_signature
+from PKD.verify.crypto_helpers import get_publickey
+from PKD.verify.verify_cert import verify_crl_signature
 
 import logging
 logger = logging.getLogger(__name__)
@@ -49,9 +49,9 @@ class GetCRL:
         # Try multiple CSCAs corresponding to the country to see if it signed the CRL
         for csca in candidates:
 
-            pubkey = _get_publickey(csca)
+            pubkey = get_publickey(csca)
 
-            if _verify_crl_signature(raw, pubkey):
+            if verify_crl_signature(raw, pubkey):
                 logger.info(
                     "CRL signature verified" ,
                     extra={"url": url, "csca_id": csca.id, "csca_not_before": csca.not_before},

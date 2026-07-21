@@ -47,13 +47,19 @@ class PKDImporter:
 
                 self.cert_repo.create(parsed, cert_country, ml)
 
+        self.session.commit()
+
         logger.info("Staring CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link Graph construstion complete")
         
+        self.session.commit()
+
         logger.info("Staring CSCA scoring")
         ScoreCSCABuilder(self.session).score()
         logger.info("CSCA scoring complete")
+        
+        self.session.commit()
     
 
 
@@ -61,7 +67,6 @@ if __name__ == "__main__":
     with SessionLocal() as session:
         importer = PKDImporter(session)
         importer.parse()
-        session.commit()
         session.close()
 
                         

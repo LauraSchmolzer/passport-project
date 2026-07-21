@@ -2,7 +2,7 @@ from PKD.load.sha_helpers import sha256
 from dataclasses import dataclass
 from datetime import datetime
 from asn1crypto import crl as asn1_crl
-from PKD.verify.crypto_helpers import _get_aki_ski
+from PKD.verify.crypto_helpers import get_aki_ski
 from PKD.db_models import CSCACertificate
 
 import logging
@@ -55,7 +55,7 @@ def parse_crl(result: tuple[bytes, CSCACertificate]) -> ParsedCRL:
     next_update = crl['tbs_cert_list']['next_update']
 
     if crl['tbs_cert_list']['crl_extensions'].native is not None:
-        aki, _ = _get_aki_ski(crl, extension_field="crl_extensions", cert_field='tbs_cert_list')
+        aki, _ = get_aki_ski(crl, extension_field="crl_extensions", cert_field='tbs_cert_list')
     else:
         aki = None
 

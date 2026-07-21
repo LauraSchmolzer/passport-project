@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 import logging
 logger = logging.getLogger(__name__)
 
-def _get_aki_ski(cert: asn1_x509.Certificate | asn1_crl.CertificateList, extension_field = 'extensions', cert_field = 'tbs_certificate') -> tuple[bytes | None, bytes | None]:
+def get_aki_ski(cert: asn1_x509.Certificate | asn1_crl.CertificateList, extension_field = 'extensions', cert_field = 'tbs_certificate') -> tuple[bytes | None, bytes | None]:
     """
         Document 12: Table 6 on page 41 : Certificate Extensions Profile
             - SKI and AKI have mandatory presence for CSCA self-signed root.
@@ -38,7 +38,7 @@ def _get_aki_ski(cert: asn1_x509.Certificate | asn1_crl.CertificateList, extensi
 
     return aki, ski
 
-def _get_publickey(c: CSCACertificate):
+def get_publickey(c: CSCACertificate):
     # ICAO 9303 requires CSCA/DC certificates to encode EC public keys with explicit curve parameters
     # Cryptography library refuses top load this design
     raw = c.raw_cert

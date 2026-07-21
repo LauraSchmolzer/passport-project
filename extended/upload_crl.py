@@ -4,11 +4,9 @@
 
 from PKD.parsers.crl_parser import parse_crl
 from PKD.repositories.crl_repo import CRLRepository
-from CRL.get_crl import GetCRL
+from PKD.CRL.get_crl import GetCRL
 
 from PKD.db_models import SessionLocal, CSCACertificate
-
-from PKD.graph.crl_builder import CRLGraphBuilder
 
 INCLUDE_ICAO = True
 

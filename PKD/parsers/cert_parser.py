@@ -1,5 +1,5 @@
 from PKD.load.sha_helpers import sha256
-from PKD.verify.crypto_helpers import _get_aki_ski
+from PKD.verify.crypto_helpers import get_aki_ski
 from dataclasses import dataclass
 from datetime import datetime
 from asn1crypto import x509 as asn1_x509
@@ -47,7 +47,7 @@ def parse_cert(cert: asn1_x509.Certificate) -> ParsedCert:
     subject = cert.subject.native
     issuer = cert.issuer.native
 
-    aki,ski = _get_aki_ski(cert)
+    aki,ski = get_aki_ski(cert)
 
     return ParsedCert(
         raw             = der,
