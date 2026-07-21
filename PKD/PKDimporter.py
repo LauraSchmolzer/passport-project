@@ -47,19 +47,19 @@ class PKDImporter:
 
                 self.cert_repo.create(parsed, cert_country, ml)
 
-        session.commit()
+        self.session.commit()
 
         logger.info("Staring CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link Graph construstion complete")
         
-        session.commit()
+        self.session.commit()
 
         logger.info("Staring CSCA scoring")
         ScoreCSCABuilder(self.session).score()
         logger.info("CSCA scoring complete")
         
-        session.commit()
+        self.session.commit()
     
 
 
