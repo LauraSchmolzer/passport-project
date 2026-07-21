@@ -57,7 +57,7 @@ def _verify_signature_generic(
         return False
 
 
-def _verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
+def verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
     crl = x509.load_der_x509_crl(raw)
     asn1_obj = asn1_crl.CertificateList.load(raw)
 
@@ -83,7 +83,7 @@ def _verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
         asn1_obj      = asn1_obj,
     )
 
-def _verify_signature(raw: bytes, issuer_pubkey) -> bool:
+def verify_signature(raw: bytes, issuer_pubkey) -> bool:
     cert = x509.load_der_x509_certificate(raw)
     asn1_cert = asn1_x509.Certificate.load(raw)
 

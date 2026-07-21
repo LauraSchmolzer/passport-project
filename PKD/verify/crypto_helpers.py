@@ -37,7 +37,7 @@ def get_aki_ski(cert: asn1_x509.Certificate | asn1_crl.CertificateList, extensio
 
     return aki, ski
 
-def _get_publickey(c: CSCACertificate):
+def get_publickey(c: CSCACertificate):
     # ICAO 9303 requires CSCA/DC certificates to encode EC public keys with explicit curve parameters
     # Cryptography library refuses top load this design
     raw = c.raw_cert
