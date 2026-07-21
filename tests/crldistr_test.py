@@ -1,6 +1,6 @@
 
 from PKD.db_models import SessionLocal, CSCACertificate
-from CRL.get_crl import GetCRL
+from PKD.CRL.get_crl import GetCRL
 
 INCLUDE_ICAO = False
 
