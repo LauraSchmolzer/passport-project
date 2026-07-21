@@ -33,11 +33,11 @@ from cryptography.x509.oid import NameOID
 
 from asn1crypto import x509 as asn1_x509
 
-from PKD.verify.crypto_helpers import _get_publickey, _get_aki_ski
+from PKD.verify.crypto_helpers import get_publickey, get_aki_ski
 from PKD.verify.verify_cert import (
     _verify_signature_generic,
-    _verify_crl_signature,
-    _verify_signature,
+    verify_crl_signature,
+    verify_signature,
 )
 
 # ---------------------------------------------------------------------------
@@ -202,14 +202,14 @@ def explicit_ec_der_cert():
 class TestGetAkiSki:
     def test_extracts_ski_and_aki_from_ds_cert(self, rsa_ds_cert):
         parsed = asn1_x509.Certificate.load(der(rsa_ds_cert))
-        aki, ski = _get_aki_ski(parsed)
+        aki, ski = get_aki_ski(parsed)
         assert aki is not None
         assert ski is not None
 
     def test_self_signed_root_aki_matches_own_ski(self, rsa_csca):
         _, csca_cert = rsa_csca
         parsed = asn1_x509.Certificate.load(der(csca_cert))
-        aki, ski = _get_aki_ski(parsed)
+        aki, ski = get_aki_ski(parsed)
         # CSCA self-signed root so AKI is required to reference its own SKI
         assert aki == ski
 
@@ -217,8 +217,8 @@ class TestGetAkiSki:
         _, csca_cert = rsa_csca
         csca_parsed = asn1_x509.Certificate.load(der(csca_cert))
         ds_parsed = asn1_x509.Certificate.load(der(rsa_ds_cert))
-        _, csca_ski = _get_aki_ski(csca_parsed)
-        ds_aki, _ = _get_aki_ski(ds_parsed)
+        _, csca_ski = get_aki_ski(csca_parsed)
+        ds_aki, _ = get_aki_ski(ds_parsed)
         assert ds_aki == csca_ski
 
     def test_missing_extensions_returns_none_none(self):
@@ -234,7 +234,7 @@ class TestGetAkiSki:
             .sign(key, hashes.SHA256())
         )
         parsed = asn1_x509.Certificate.load(der(cert))
-        aki, ski = _get_aki_ski(parsed)
+        aki, ski = get_aki_ski(parsed)
         assert aki is None
         assert ski is None
 
@@ -247,19 +247,19 @@ class TestGetPublicKey:
     def test_rsa_named_curve_style_cert(self, rsa_csca):
         _, cert = rsa_csca
         stub = SimpleNamespace(raw_cert=der(cert))
-        pubkey = _get_publickey(stub)
+        pubkey = get_publickey(stub)
         assert pubkey.public_numbers() == cert.public_key().public_numbers()
 
     def test_ec_named_curve_cert(self, ec_csca):
         _, cert = ec_csca
         stub = SimpleNamespace(raw_cert=der(cert))
-        pubkey = _get_publickey(stub)
+        pubkey = get_publickey(stub)
         assert pubkey.public_numbers() == cert.public_key().public_numbers()
 
     def test_invalid_der_raises_valueerror(self):
         stub = SimpleNamespace(raw_cert=b"not a certificate")
         with pytest.raises(ValueError):
-            _get_publickey(stub)
+            get_publickey(stub)
     
     # ---- TEST explicit EC parameters ----------------------------------------------------
     """
@@ -274,7 +274,7 @@ class TestGetPublicKey:
  
     def test_explicit_ec_params_uses_openssl_fallback(self, explicit_ec_der_cert):
         stub = SimpleNamespace(raw_cert=explicit_ec_der_cert)
-        pubkey = _get_publickey(stub)
+        pubkey = get_publickey(stub)
         assert isinstance(pubkey, ec.EllipticCurvePublicKey)
         # after the fallback teh finction should re-encode explicit params to a named OID
         assert pubkey.curve.name in ("secp256r1", "prime256v1")
@@ -282,10 +282,10 @@ class TestGetPublicKey:
     def test_explicit_ec_signature_still_verifies(self, explicit_ec_der_cert):
         # explicit param should still be able to verify the signature
         stub = SimpleNamespace(raw_cert=explicit_ec_der_cert)
-        pubkey = _get_publickey(stub)
+        pubkey = get_publickey(stub)
         cert = x509.load_der_x509_certificate(explicit_ec_der_cert)
         # self-signed: the cert's own public key must verify the cert's own signature
-        assert _verify_signature(explicit_ec_der_cert, pubkey) is True
+        assert verify_signature(explicit_ec_der_cert, pubkey) is True
 
 
 # ---------------------------------------------------------------------------
@@ -295,15 +295,15 @@ class TestGetPublicKey:
 class TestVerifySignature:
     def test_valid_rsa_signature(self, rsa_csca, rsa_ds_cert):
         csca_key, _ = rsa_csca
-        assert _verify_signature(der(rsa_ds_cert), csca_key.public_key()) is True
+        assert verify_signature(der(rsa_ds_cert), csca_key.public_key()) is True
 
     def test_valid_ec_signature(self, ec_csca, ec_ds_cert):
         csca_key, _ = ec_csca
-        assert _verify_signature(der(ec_ds_cert), csca_key.public_key()) is True
+        assert verify_signature(der(ec_ds_cert), csca_key.public_key()) is True
 
     def test_wrong_issuer_key_fails(self, rsa_ds_cert):
         wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        assert _verify_signature(der(rsa_ds_cert), wrong_key.public_key()) is False
+        assert verify_signature(der(rsa_ds_cert), wrong_key.public_key()) is False
 
     def test_tampered_der_fails_or_errors(self, rsa_csca, rsa_ds_cert):
         # A tampered cert should either fail to parse, or parse and fail signature verification 
@@ -311,7 +311,7 @@ class TestVerifySignature:
         raw = bytearray(der(rsa_ds_cert))
         raw[len(raw) // 2] ^= 0xFF
         try:
-            result = _verify_signature(bytes(raw), csca_key.public_key())
+            result = verify_signature(bytes(raw), csca_key.public_key())
         except Exception:
             return
         assert result is False
@@ -347,20 +347,20 @@ class TestVerifyCrlSignature:
     def test_valid_crl_signature_with_revoked_entries(self, rsa_csca):
         csca_key, csca_cert = rsa_csca
         crl = generate_crl(csca_key, csca_cert, revoked_serials=[12345, 67890])
-        assert _verify_crl_signature(der(crl), csca_key.public_key()) is True
+        assert verify_crl_signature(der(crl), csca_key.public_key()) is True
 
     def test_valid_empty_crl_signature(self, rsa_csca):
         csca_key, csca_cert = rsa_csca
         crl = generate_crl(csca_key, csca_cert, revoked_serials=[])
-        assert _verify_crl_signature(der(crl), csca_key.public_key()) is True
+        assert verify_crl_signature(der(crl), csca_key.public_key()) is True
 
     def test_crl_wrong_key_fails(self, rsa_csca):
         csca_key, csca_cert = rsa_csca
         wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         crl = generate_crl(csca_key, csca_cert)
-        assert _verify_crl_signature(der(crl), wrong_key.public_key()) is False
+        assert verify_crl_signature(der(crl), wrong_key.public_key()) is False
 
     def test_ec_crl_signature(self, ec_csca):
         csca_key, csca_cert = ec_csca
         crl = generate_crl(csca_key, csca_cert, revoked_serials=[1])
-        assert _verify_crl_signature(der(crl), csca_key.public_key()) is True
+        assert verify_crl_signature(der(crl), csca_key.public_key()) is True

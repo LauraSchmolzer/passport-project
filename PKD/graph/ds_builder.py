@@ -2,7 +2,8 @@
     Link DS certs to issuing CSCA and validate signature.
 """
 
-from PKD.verify.verify_cert import _verify_signature, _get_publickey
+from PKD.verify.verify_cert import verify_signature
+from PKD.verify.crypto_helpers import get_publickey
 from PKD.db_models import CSCACertificate, DSCertificate
 
 import logging
@@ -51,8 +52,8 @@ class DSGraphBuilder:
 
         # verify signature
         try:
-            issuer_pubkey = _get_publickey(issuing_csca)
-            ds_cert.signature_valid = _verify_signature(ds_cert.raw_cert, issuer_pubkey)
+            issuer_pubkey = get_publickey(issuing_csca)
+            ds_cert.signature_valid = verify_signature(ds_cert.raw_cert, issuer_pubkey)
         except Exception:
             logger.exception(
                 "Error verifying DS cert signature",

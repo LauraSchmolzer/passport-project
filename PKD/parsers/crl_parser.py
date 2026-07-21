@@ -2,7 +2,7 @@ from PKD.parsers.ldif_parser import sha256
 from dataclasses import dataclass
 from datetime import datetime
 from asn1crypto import crl as asn1_crl
-from PKD.verify.crypto_helpers import _get_aki_ski
+from PKD.verify.crypto_helpers import get_aki_ski
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def parse_crl(raw: bytes) -> ParsedCRL:
     issuer = crl['tbs_cert_list']['issuer'].native
     next_update = crl['tbs_cert_list']['next_update']
 
-    aki, _ = _get_aki_ski(crl, extension_field= "crl_extensions", cert_field='tbs_cert_list')
+    aki, _ = get_aki_ski(crl, extension_field= "crl_extensions", cert_field='tbs_cert_list')
 
     return ParsedCRL(
         raw             = raw,

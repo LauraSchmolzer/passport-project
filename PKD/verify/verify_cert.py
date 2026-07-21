@@ -1,6 +1,4 @@
 
-from PKD.db_models import CSCACertificate
-from PKD.verify.crypto_helpers import _get_publickey
 from asn1crypto import x509 as asn1_x509
 from asn1crypto import crl as asn1_crl
 
@@ -61,7 +59,7 @@ def _verify_signature_generic(
         return False
 
 
-def _verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
+def verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
     crl = x509.load_der_x509_crl(raw)
     asn1_obj = asn1_crl.CertificateList.load(raw)
 
@@ -87,7 +85,7 @@ def _verify_crl_signature(raw: bytes, issuer_pubkey) -> bool:
         asn1_obj      = asn1_obj,
     )
 
-def _verify_signature(raw: bytes, issuer_pubkey) -> bool:
+def verify_signature(raw: bytes, issuer_pubkey) -> bool:
     cert = x509.load_der_x509_certificate(raw)
     asn1_cert = asn1_x509.Certificate.load(raw)
 

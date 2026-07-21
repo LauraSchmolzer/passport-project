@@ -5,9 +5,9 @@
 from asn1crypto import x509 as asn1_x509
 from typing import Optional
 
-from CRL.build_URL import get_crl_distribution_urls, get_country_code, build_pkd_crl_urls
+from PKD.CRL.build_URL import get_crl_distribution_urls, get_country_code, build_pkd_crl_urls
 from PKD.db_models import DSCertificate
-from CRL.two_to_three import two_to_three
+from PKD.CRL.two_to_three import two_to_three
 
 import logging
 logger = logging.getLogger(__name__)
