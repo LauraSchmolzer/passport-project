@@ -123,7 +123,7 @@ Validation for RSA abstracted.
 
 ## Trust Score of a Root Certificate
 
-According to official ICAO documentation, there exist **four** categories for ranking the trust of CSCA certificates. As the CSCA serves as the root anchor of the entire validation process, establishing its trust is critical for ePassport validation.
+According to official ICAO documentation, there exist **three** categories for ranking the trust of CSCA certificates. As the CSCA serves as the root anchor of the entire validation process, establishing its trust is critical for ePassport validation.
 
 The scoring logic of this file is slightly altered.
 
