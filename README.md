@@ -143,12 +143,12 @@ This is not a complete implementation of ICAO's methodology: ICAO's own criteria
 
 The extended functions that populate the added tables exist in `extended`.
 
-- `extended/upload_crl.py`: fetches all CRLs for the currently loaded CSCAs and loads
+- `PKD/extended/upload_crl.py`: fetches all CRLs for the currently loaded CSCAs and loads
   them into the database. It uses `CRL/get_crl.py`, which validates each CRL's signature
   against the CSCA and relates it. You can include or exclude the ICAO distribution points
   by setting `INCLUDE_ICAO`.
 
-- `extended/upload_validate_dsc.py`: demonstrates how a DS certificate is validated,
+- `PKD/extended/upload_validate_dsc.py`: demonstrates how a DS certificate is validated,
   linked to its issuing CSCA, and checked for revocation. Since DS certificates can only
   realistically be obtained from real passports or from the ICAO PKD, this script reads
   from a downloaded ICAO PKD LDIF snapshot.
