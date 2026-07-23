@@ -6,13 +6,17 @@ database for cross-referencing and trust-chain validation.
 Abstract overview of main import file: `PKD/PKDimporter.py`
 ![pipeline](data/pipeline.png "Full pipeline overview")
 
+Other branches that are dependant on ICAO PKD:
+- version/ICAOldif : Parses the ICAO PKD files for MLs and other PKI objects instead of downloading from public websites.
+- version/combinedMls : Works the same as main, however has an extended database and two extended functions to load in other PKI objects.
+
 ## Requirements
 
 - Python 3.11+
 - `cryptography==46.0.0` (pinned — see [Known Issues](#known-issues--data-quirks))
 - `asn1crypto`
 - OpenSSL CLI available on `PATH` (used as a fallback for explicit-curve EC keys)
-- PostgreSQL
+- SQLAlchemy
 
 ## Setup
 
@@ -108,7 +112,7 @@ The `CRL` folder holds functions that identify and gather CRL distribution point
 
 Once all known URLs are retrieved, we try the URLs in `fetch_crl` which returns the first one that resolves a valid CRL. Both HTTP(S) and LDAP are supported. For HTTP(S), it is checked for a leading `0x30` byte to confirm it is a DER-encoded CRL instead of an error page and LDAP, queried via `ldap3` against the `certificateRevocationList` attribute (or whichever attribute is specified in the URL's query string).
 
-`GetCRL.get_crl` ties the two together and adds signature verification. By inputting a certificate, it resolves the URLs, fetch a CRL and then verifies the signature against a ranked list of CSCA certificates for the issuing country — not just the CSCA that signed the DS certificate being checked, since a CRL may have been issued after a key rollover. Validation is again done using the function in `PKD/verify`, just like for Link certificates. If no valid CRLs are found, `None` is returned.
+`PKD/CRL/get_crl.py` ties the two together and adds signature verification. By inputting a certificate, it resolves the URLs, fetch a CRL and then verifies the signature against a ranked list of CSCA certificates for the issuing country — not just the CSCA that signed the DS certificate being checked, since a CRL may have been issued after a key rollover. Validation is again done using the function in `PKD/verify`, just like for Link certificates. If no valid CRLs are found, `None` is returned.
 
 ## Trust Score of a Root Certificate
 
@@ -151,7 +155,7 @@ encountered so far:
   BG, TR, EE, PH, MD, CN, MA as of writing) have no matching predecessor CSCA
   in the imported dataset. Most of the time, a second link cert exists from the same date.
 - **Malformed extensions** — at least two Lithuanian certs raise a parse
-  error on a specific extension; root cause not yet isolated.
+  error on a specific extension; seems to be missing AKI and SKI extension for two certificates.
 - **Non-conformant ASN.1 encodings** — NULL signature algorithm parameters
   (common in Java-generated certs) and non-positive serial numbers. Currently
   only warnings in `cryptography==46.0.0`; a future release will treat these

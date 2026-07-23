@@ -4,7 +4,6 @@
 
 from PKD.db_models import CSCACertificate, CSCALink
 from sqlalchemy import or_
-from enum import Enum
 
 """ From the official documentation - https://www.icao.int/icao-pkd/epassport-validation-roadmap-tool-validating-csca 
 
@@ -28,11 +27,6 @@ from enum import Enum
         was received by email with no other information received via a separate route against which to cross-check. 
 """
 
-class TrustLevel(Enum):
-    RED = 0
-    AMBER = 1
-    GREEN = 2
-    
 class ScoreCSCABuilder:
     def __init__(self, session):
         self.session = session
