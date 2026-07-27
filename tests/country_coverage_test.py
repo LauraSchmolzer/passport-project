@@ -16,6 +16,7 @@ eMRTD_participants = {
 }
 
 from PKD.db_models import CSCACertificate, SessionLocal, MasterList
+from PKD.verify.verify_cert import is_within_validity
 
 def test_which_countries():
     with SessionLocal() as session:
@@ -41,6 +42,22 @@ def test_missing_countries():
     print(f"Missing countries {sorted(missing), len(missing)} from total {len(eMRTD_participants)}")
     print("="*70)
 
+
+def test_expired_certificates():
+    with SessionLocal() as session:
+        all_certs = session.query(CSCACertificate).all()
+
+        expired = [c for c in all_certs if not is_within_validity(c.not_before, c.not_after)]
+
+        print("="*70)
+        print(f"Expired or not-yet-valid CSCA certificates: {len(expired)} out of {len(all_certs)}")
+        for cert in expired:
+            print(f"  {cert.country.code}: valid {cert.not_before} to {cert.not_after} "
+                  f"(subject: {cert.subject_dn})")
+        print("="*70)
+
 test_which_countries()
 
 test_missing_countries()
+
+test_expired_certificates()

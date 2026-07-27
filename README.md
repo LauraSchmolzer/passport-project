@@ -198,6 +198,7 @@ Test files used : `icaopkd_001_complete_10203.ldif` and `icaopkd_002_complete_52
 
 ### Country Coverage `signature_test.py`
 Each country is covered using the ICAO PKD. 13 MLs are shared where there exist more CSCAs than just its own country.
+198 out of 895 of all CSCA certificates are expired. 
 
 ### CRL Distribution points  `crldistr_test.py`
 Loops through all CRLs and check which serial numbers are found.

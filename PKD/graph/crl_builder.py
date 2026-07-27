@@ -2,7 +2,7 @@
     Link CRL to certificate and validate signature.
 """
 
-from PKD.verify.verify_cert import verify_crl_signature
+from PKD.verify.verify_cert import verify_crl_signature, is_within_validity
 from PKD.verify.crypto_helpers import get_publickey
 from PKD.db_models import CSCACertificate, CRL, DSCertificate
 
@@ -52,9 +52,19 @@ class CRLGraphBuilder:
         crl.csca_id = issuing_csca.id
 
         # verify signature
+        
         try:
-            issuer_pubkey = get_publickey(issuing_csca)
-            crl.signature_valid = verify_crl_signature(crl.raw_crl, issuer_pubkey)
+            if is_within_validity(issuing_csca.not_before, issuing_csca.not_after):
+
+                issuer_pubkey = get_publickey(issuing_csca)
+                crl.signature_valid = verify_crl_signature(crl.raw_crl, issuer_pubkey)
+            else:
+                logger.debug(
+                    "Outdated signature", extra={
+                        "country": issuing_csca.country.code,
+                        "not_after": issuing_csca.not_after}
+                )
+                crl.signature_valid = False
         except Exception:
             logger.exception(
                 "Error verifying CRL signature",

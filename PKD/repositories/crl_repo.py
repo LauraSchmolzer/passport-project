@@ -13,6 +13,12 @@ class CRLRepository:
         )
 
     def create(self, parsed: ParsedCRL, country) -> CRL:
+
+        existing = self.get_by_fingerprint(parsed.sha256_finger)
+
+        if existing is not None:
+            return existing
+    
         crl = CRL(
             raw_crl       = parsed.raw,
             sha256_finger = parsed.sha256_finger,

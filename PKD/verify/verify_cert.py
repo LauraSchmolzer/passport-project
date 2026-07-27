@@ -10,6 +10,14 @@ from cryptography.hazmat.primitives import hashes
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime, timezone
+
+def is_within_validity(not_before: datetime, not_after: datetime, at: datetime | None = None) -> bool:
+    at = at or datetime.now(timezone.utc)
+    if at.tzinfo is not None:
+        at = at.replace(tzinfo=None)
+    return not_before <= at <= not_after
+
 _HASH_ALGOS = {
     "sha1":     hashes.SHA1(),
     "sha224":   hashes.SHA224(),

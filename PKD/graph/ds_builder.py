@@ -2,7 +2,7 @@
     Link DS certs to issuing CSCA and validate signature.
 """
 
-from PKD.verify.verify_cert import verify_signature
+from PKD.verify.verify_cert import verify_signature, is_within_validity
 from PKD.verify.crypto_helpers import get_publickey
 from PKD.db_models import CSCACertificate, DSCertificate
 
@@ -52,17 +52,15 @@ class DSGraphBuilder:
 
         # verify signature
         try:
-            issuer_pubkey = get_publickey(issuing_csca)
-            ds_cert.signature_valid = verify_signature(ds_cert.raw_cert, issuer_pubkey)
+            if is_within_validity(ds_cert.not_before, ds_cert.not_after):   
+                issuer_pubkey = get_publickey(issuing_csca)
+                ds_cert.signature_valid = verify_signature(ds_cert.raw_cert, issuer_pubkey)
+            else:
+                logger.warning("DSC signature valid but certificate outside validity window",extra={"ds_id": ds_cert.id})
+                ds_cert.signature_valid = False   # or a separate `date_valid` flag — see below
         except Exception:
             logger.exception(
                 "Error verifying DS cert signature",
                 extra={"ds_id": ds_cert.id, "issuer_id": issuing_csca.id},
             )
             ds_cert.signature_valid = False
-
-        if not ds_cert.signature_valid:
-            logger.warning(
-                "DS cert signature invalid",
-                extra={"ds_id": ds_cert.id, "issuer_id": issuing_csca.id},
-            )

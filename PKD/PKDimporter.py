@@ -15,7 +15,7 @@ from PKD.repositories.country_repo import CountryRepository
 from PKD.repositories.ds_repo import DSCertificateRepository
 from PKD.repositories.crl_repo import CRLRepository
 
-from PKD.db_models import MasterList,SessionLocal
+from PKD.db_models import SessionLocal
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 from asn1crypto import x509 as asn1_x509
 import os
 from pathlib import Path
-from collections import defaultdict
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,8 +41,9 @@ class PKDImporter:
         self.crl_repo = CRLRepository(session)
 
     def parse(self, ldif_ml_file: Path, ldif_ds_crl_file: Path):
-        logger.info("Starting PKD import")
+        print("=-=-=-=-=-=-=-=-=-=-=-= Starting PKD import =-=-=-=-=-=-=-=-=-=-=-=")
 
+        print("=-=-=-=-=-=-= Load ldif for MLs =-=-=-=-=-=-=")
         with ldif_ml_file.open("rb") as f:
             parser_1 = ParseLDIF(f)
 
@@ -72,18 +72,21 @@ class PKDImporter:
         
         session.commit()
 
+        print("=-=-=-=-=-=-= Link CSCAs =-=-=-=-=-=-=")
         logger.info("Starting CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link graph construction complete")
 
         session.commit()
 
+        print("=-=-=-=-=-=-= Score CSCAs =-=-=-=-=-=-=")
         logger.info("Staring CSCA scoring")
         ScoreCSCABuilder(self.session).score()
         logger.info("CSCA scoring complete")
 
         session.commit()
         
+        print("=-=-=-=-=-=-= Load ldif for PKI objects =-=-=-=-=-=-=")
         with ldif_ds_crl_file.open("rb") as f:
             parser_2 = ParseLDIF(f)
 
@@ -104,19 +107,18 @@ class PKDImporter:
             
             session.commit()
             # Link DS to CSCA 
+            print("=-=-=-=-=-=-= Link DSCs to CSCAs =-=-=-=-=-=-=")
             logger.info("Starting DS to CSCA graph construction")
             DSGraphBuilder(self.session).build()
 
             session.commit()
-            # Link CRL to CSCAs
+            # Link CRL to DSCs
+            print("=-=-=-=-=-=-= Link CRLs to DSCs =-=-=-=-=-=-=")
             logger.info("Starting CRL to CSCA + DS revocation graph construction")
             CRLGraphBuilder(self.session).build()
 
             session.commit()
         
-
-
-
 if __name__ == "__main__":
 
     with SessionLocal() as session:

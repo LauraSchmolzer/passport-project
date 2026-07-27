@@ -13,6 +13,11 @@ class DSCertificateRepository:
 
     def create(self, cert_data, country):
 
+        existing = self.get_by_fingerprint(cert_data.sha256_finger)
+
+        if existing is not None:
+            return existing
+
         cert = DSCertificate(
             subject_dn=cert_data.subject_dn,
             issuer_dn = cert_data.issuer_dn,
