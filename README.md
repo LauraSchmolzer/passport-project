@@ -188,6 +188,7 @@ Most of the tests are inspection scripts for the data, not assertions.
 Prints which countries are in each master list and print the missing countries.
 Missing countries expected (14-07-2026) : ['AM', 'MV', 'PY', 'ZZ']
 Here, 'ZZ' can be found in the ICAO PKD but is likely from certificates with unknown issuers.
+6 out of 684 are expired: 1 from England, 2 from Czech republic and 3 from Austria. They expired this month (July) or last month (June).
 
 ### CRL Distribution points  `crldistr_test.py`
 Loops through all CSCA certificates in the database to check for CRL distribution point.

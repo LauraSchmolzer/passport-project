@@ -1,4 +1,4 @@
-from PKD.verify.verify_cert import verify_signature
+from PKD.verify.verify_cert import verify_signature, is_within_validity
 from PKD.verify.crypto_helpers import get_publickey
 from PKD.db_models import CSCACertificate, CSCALink
 
@@ -31,6 +31,14 @@ class LinkGraphBuilder:
         return index
 
     def _process_link(self, link_cert, ski_index):
+
+        existing = self.session.query(CSCALink).filter_by(
+            link_cert_id=link_cert.id
+        ).first()
+
+        if existing:
+            return
+        
         aki = link_cert.aki
         ski = link_cert.ski
 
@@ -45,6 +53,14 @@ class LinkGraphBuilder:
             )
             return
 
+        if not is_within_validity(old_csca.not_before, old_csca.not_after):
+            logger.debug(
+                "Outdated signature", extra={
+                    "country": old_csca.country.code,
+                    "not_after": old_csca.not_after}
+            )
+            return
+    
         issuer_pubkey = get_publickey(old_csca)
 
         if not verify_signature(link_cert.raw_cert, issuer_pubkey):
@@ -63,12 +79,6 @@ class LinkGraphBuilder:
             )
             return
 
-        existing = self.session.query(CSCALink).filter_by(
-            link_cert_id=link_cert.id
-        ).first()
-
-        if existing:
-            return
         # store relationship
         edge = CSCALink(
             from_csca_id=old_csca.id,

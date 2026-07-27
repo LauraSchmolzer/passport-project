@@ -5,7 +5,7 @@ from PKD.CRL.load.fetch_crl import fetch_crl
 
 from PKD.db_models import CSCACertificate
 from PKD.verify.crypto_helpers import get_publickey
-from PKD.verify.verify_cert import verify_crl_signature
+from PKD.verify.verify_cert import verify_crl_signature, is_within_validity
 
 import logging
 logger = logging.getLogger(__name__)
@@ -46,6 +46,14 @@ class GetCRL:
         for csca in candidates:
 
             pubkey = get_publickey(csca)
+
+            if not is_within_validity(csca.not_before, csca.not_after):
+                logger.debug(
+                    "Outdated signature", extra={
+                        "country": csca.country.code,
+                        "not_after": csca.not_after}
+                )
+                return
 
             if verify_crl_signature(raw, pubkey):
                 logger.info(
