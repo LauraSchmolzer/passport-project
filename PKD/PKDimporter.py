@@ -24,8 +24,9 @@ class PKDImporter:
         self.cert_repo = CertificateRepository(session)
 
     def parse(self):
-        logger.info("Starting PKD import")
+        print("=-=-=-=-=-=-=-=-=-=-=-= Starting PKD import =-=-=-=-=-=-=-=-=-=-=-=")
 
+        print("=-=-=-=-=-=-= Load Mls =-=-=-=-=-=-=")
         for ml_data in load_mls():
             logger.info("Processing ML for %s", ml_data.country)
 
@@ -49,17 +50,20 @@ class PKDImporter:
 
         self.session.commit()
 
+        print("=-=-=-=-=-=-= Link CSCAs =-=-=-=-=-=-=")
         logger.info("Staring CSCA link graph construction")
         LinkGraphBuilder(self.session).build()
         logger.info("Link Graph construstion complete")
         
         self.session.commit()
-
+        
+        print("=-=-=-=-=-=-= Score CSCAs =-=-=-=-=-=-=")
         logger.info("Staring CSCA scoring")
         ScoreCSCABuilder(self.session).score()
         logger.info("CSCA scoring complete")
         
         self.session.commit()
+        print("SUCCESS")
     
 
 

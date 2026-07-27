@@ -35,6 +35,7 @@ def get_candidate_cscas(session, country_id: int, aki: bytes | None) -> list[CSC
 
 def upload_validate_dsc():
     with SessionLocal() as session:
+        print("=-=-=-=-=-=-=-=-=-=-=-= Upload DSCs =-=-=-=-=-=-=-=-=-=-=-=")
         ds_repo = DSCertificateRepository(session)
         country_repo = CountryRepository(session)
 
@@ -59,12 +60,15 @@ def upload_validate_dsc():
 
             session.commit()
             # Link DS to CSCA
+            print('=-=-=-=-=-=-= Link DSCs to CSCAs =-=-=-=-=-=-=')
             DSGraphBuilder(session).build()
             session.commit()
 
-            # Link CRL to CSCAs
+            # Link CRL to DSCs
+            print('=-=-=-=-=-=-= Link CRLs to DSCs =-=-=-=-=-=-=')
             CRLGraphBuilder(session).build_revocations()
 
             session.commit()
+            print("=-=-=-=-=-=-=-=-=-=-=-= SUCCESS =-=-=-=-=-=-=-=-=-=-=-=")
     
 upload_validate_dsc()

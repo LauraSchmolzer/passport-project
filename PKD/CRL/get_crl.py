@@ -51,6 +51,14 @@ class GetCRL:
 
             pubkey = get_publickey(csca)
             
+            if not is_within_validity(csca.not_before, csca.not_after):
+                logger.debug(
+                    "Outdated signature", extra={
+                        "country": csca.country.code,
+                        "not_after": csca.not_after}
+                )
+                return None
+            
             if verify_crl_signature(raw, pubkey):
                 logger.info(
                     "CRL signature verified" ,

@@ -12,6 +12,7 @@ INCLUDE_ICAO = True
 
 def extend_with_CRL():
     with SessionLocal() as session:
+        print("=-=-=-=-=-=-=-=-=-=-=-= Import CRLs =-=-=-=-=-=-=-=-=-=-=-=")
         csca_certs = session.query(CSCACertificate).all()
 
         getter = GetCRL(session)
@@ -26,5 +27,6 @@ def extend_with_CRL():
             repo.create(parsed_crl)
 
         session.commit()
+        print("=-=-=-=-=-=-=-=-=-=-=-= SUCCESS =-=-=-=-=-=-=-=-=-=-=-=")
 
 extend_with_CRL()
