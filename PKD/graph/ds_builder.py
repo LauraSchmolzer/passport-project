@@ -50,15 +50,13 @@ class DSGraphBuilder:
 
         # check validity of the DS certificate
         ds_cert.csca_id = issuing_csca.id
-        if not is_within_validity(ds_cert.not_before, ds_cert.not_after):
-            logger.warning("DSC signature valid but certificate outside validity window",extra={"ds_id": ds_cert.id})
-            ds_cert.signature_valid = False   # or a separate `date_valid` flag — see below
-            return
-        
-        # verify signature
         try:
-            issuer_pubkey = get_publickey(issuing_csca)
-            ds_cert.signature_valid = verify_signature(ds_cert.raw_cert, issuer_pubkey)
+            if  is_within_validity(ds_cert.not_before, ds_cert.not_after):   
+                issuer_pubkey = get_publickey(issuing_csca)
+                ds_cert.signature_valid = verify_signature(ds_cert.raw_cert, issuer_pubkey)
+            else:
+                logger.warning("DSC signature valid but certificate outside validity window",extra={"ds_id": ds_cert.id})
+                ds_cert.signature_valid = False   # or a separate `date_valid` flag — see below
         except Exception:
             logger.exception(
                 "Error verifying DS cert signature",
