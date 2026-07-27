@@ -2,20 +2,13 @@
     Link DS certs to issuing CSCA and validate signature.
 """
 
-from PKD.verify.verify_cert import verify_signature
+from PKD.verify.verify_cert import verify_signature, is_within_validity
 from PKD.verify.crypto_helpers import get_publickey
 from PKD.db_models import CSCACertificate, DSCertificate
 
 import logging
 logger = logging.getLogger(__name__)
 
-from datetime import datetime, timezone
-
-def is_within_validity(not_before: datetime, not_after: datetime, at: datetime | None = None) -> bool:
-    at = at or datetime.now(timezone.utc)
-    if at.tzinfo is not None:
-        at = at.replace(tzinfo=None)
-    return not_before <= at <= not_after
 
 
 class DSGraphBuilder:
