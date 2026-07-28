@@ -16,7 +16,7 @@ eMRTD_participants = {
 }
 
 from PKD.db_models import CSCACertificate, SessionLocal, MasterList
-from datetime import datetime, timezone
+from PKD.verify.verify_cert import is_within_validity
 
 def test_which_countries():
     with SessionLocal() as session:
@@ -42,11 +42,7 @@ def test_missing_countries():
     print(f"Missing countries {sorted(missing), len(missing)} from total {len(eMRTD_participants)}")
     print("="*70)
 
-def is_within_validity(not_before: datetime, not_after: datetime, at: datetime | None = None) -> bool:
-    at = at or datetime.now(timezone.utc)
-    if at.tzinfo is not None:
-        at = at.replace(tzinfo=None)
-    return not_before <= at <= not_after
+
 
 def test_expired_certificates():
     with SessionLocal() as session:

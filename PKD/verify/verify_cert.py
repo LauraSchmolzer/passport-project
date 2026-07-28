@@ -36,7 +36,8 @@ def _verify_signature_generic(
 
     hash_alg = _HASH_ALGOS.get(hash_name)
     if hash_alg is None:
-        raise ValueError(f"Unsupported hash algorithm: {hash_name}")
+        logger.error(f"Unsupported hash algorithm: {hash_name}")
+        return False
 
     try:
         if isinstance(issuer_pubkey, rsa.RSAPublicKey):
