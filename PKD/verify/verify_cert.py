@@ -19,7 +19,6 @@ def is_within_validity(not_before: datetime, not_after: datetime, at: datetime |
     return not_before <= at <= not_after
 
 _HASH_ALGOS = {
-    "sha1":     hashes.SHA1(),
     "sha224":   hashes.SHA224(),
     "sha256":   hashes.SHA256(),
     "sha384":   hashes.SHA384(),
@@ -37,7 +36,8 @@ def _verify_signature_generic(
 
     hash_alg = _HASH_ALGOS.get(hash_name)
     if hash_alg is None:
-        raise ValueError(f"Unsupported hash algorithm: {hash_name}")
+        logger.error(f"Unsupported hash algorithm: {hash_name}")
+        return False
 
     try:
         if isinstance(issuer_pubkey, rsa.RSAPublicKey):
